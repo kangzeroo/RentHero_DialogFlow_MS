@@ -15,8 +15,12 @@ exports.domain_mappings = {
       endpoint: "https://xxxxxxxx.ngrok.com/dialogflow"
     },
     {
-      domain_prefix: ".SPECIFICS",
-      endpoint: "https://de7813b0.ngrok.io/dialogflow"
+      domain_prefix: ".SPECIFIC_STRUC",
+      endpoint: "https://de7813b0.ngrok.io/dialogflow_sql_answers"
+    },
+    {
+      domain_prefix: ".SPECIFIC_UNSTRUC",
+      endpoint: "https://de7813b0.ngrok.io/dialogflow_typeform_answers"
     },
     {
       domain_prefix: ".TOURS",
