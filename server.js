@@ -43,20 +43,20 @@ if (process.env.NODE_ENV === 'production') {
   })
 } else {
   // instantiate the SSL certificate necessary for HTTPS
-  // const options = {
-  //     ca: fs.readFileSync('./credentials/renthero_host.ca-bundle'),
-  //     key: fs.readFileSync('./credentials/renthero_host.key'),
-  //     cert: fs.readFileSync('./credentials/renthero_host.crt'),
-  //     requestCert: false,
-  //     rejectUnauthorized: false
-  // }
-  // const server = https.createServer(options, app)
-  // // listen to the server on port
-  // server.listen(port, function(){
-  //   console.log("Server listening on https: ", port)
-  // })
-  const server = http.createServer(app)
+  const options = {
+      ca: fs.readFileSync('./credentials/renthero_host.ca-bundle'),
+      key: fs.readFileSync('./credentials/renthero_host.key'),
+      cert: fs.readFileSync('./credentials/renthero_host.crt'),
+      requestCert: false,
+      rejectUnauthorized: false
+  }
+  const server = https.createServer(options, app)
+  // listen to the server on port
   server.listen(port, function(){
-    console.log("Server listening on http: ", port)
+    console.log("Server listening on https: ", port)
   })
+  // const server = http.createServer(app)
+  // server.listen(port, function(){
+  //   console.log("Server listening on http: ", port)
+  // })
 }
