@@ -4,35 +4,35 @@ exports.domain_mappings = {
   domains: [
     {
       domain_prefix: ".META",
-      endpoint: "https://xxxxxxxx.ngrok.com/dialogflow"
+      endpoint: "https://renthero.host:8302/dialogflow"
     },
     {
       domain_prefix: ".SEARCHING",
-      endpoint: "https://xxxxxxxx.ngrok.com/dialogflow"
+      endpoint: "https://renthero.host:8304/dialogflow"
     },
     {
       domain_prefix: ".GENERAL",
-      endpoint: "https://xxxxxxxx.ngrok.com/dialogflow"
+      endpoint: "https://renthero.host:8305/dialogflow"
     },
     {
       domain_prefix: ".SPECIFIC_STRUC",
-      endpoint: "https://de7813b0.ngrok.io/dialogflow_sql_answers"
+      endpoint: "https://renthero.host:8303/dialogflow_sql_answers"
     },
     {
       domain_prefix: ".SPECIFIC_UNSTRUC",
-      endpoint: "https://de7813b0.ngrok.io/dialogflow_typeform_answers"
+      endpoint: "https://renthero.host:8303/dialogflow_typeform_answers"
     },
     {
       domain_prefix: ".TOURS",
-      endpoint: "https://xxxxxxxx.ngrok.com/dialogflow"
+      endpoint: "https://renthero.host:8304/dialogflow"
     },
     {
-      domain_prefix: ".NEEDS_LANDLORD",
-      endpoint: "https://xxxxxxxx.ngrok.com/dialogflow"
+      domain_prefix: ".NEEDS_HUMAN",
+      endpoint: "https://renthero.host:8307/dialogflow"
     },
     {
-      domain_prefix: ".XXXXX",
-      endpoint: "https://xxxxxxxx.ngrok.com/dialogflow"
+      domain_prefix: ".GEO_HELP",
+      endpoint: "https://renthero.host:8306/dialogflow"
     }
   ]
 }
