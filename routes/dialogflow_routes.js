@@ -49,34 +49,49 @@ exports.init_dialogflow = function(req, res, next) {
 exports.send_message = function(req, res, next) {
   console.log('------ SEND MESSAGE -------')
   console.log(req.body)
-  const params = {
-    "contexts": [],
-    "lang": "en",
-    "query": req.body.message,
-    "sessionId": req.body.session_id,
-    "timezone": "America/New_York"
-  }
   const headers = {
     headers: {
       Authorization: 'Bearer 4afa72ac700648908ae87130f11e0a9e'
     }
   }
-  let reply = ''
   saveDialog(req.body.message, req.body.session_id, req.body.session_id)
     .then((data) => {
-      return axios.post(`https://api.dialogflow.com/api/query?v=20150910`, params, headers)
+      const sentences = req.body.message.split(/[.!?\n\r]/gi)
+      console.log(sentences)
+      const x = sentences.map((sent) => {
+        let params = {
+          "contexts": [],
+          "lang": "en",
+          "query": sent,
+          "sessionId": req.body.session_id,
+          "timezone": "America/New_York"
+        }
+        let reply = ''
+        return axios.post(`https://api.dialogflow.com/api/query?v=20150910`, params, headers)
+                      .then((data) => {
+                        // once we have the response, only then do we dispatch an action to Redux
+                        console.log('------------ response from query -----------')
+                        console.log(data.data)
+                        reply = data.data.result.fulfillment.speech
+                        const sender = data.data.result.metadata.intentName ? data.data.result.metadata.intentName : data.data.result.action
+                        return saveDialog(reply, req.body.session_id, sender)
+                      })
+                      .then((data) => {
+                        return Promise.resolve(reply)
+                      })
+                      .catch((err) => {
+                        return Promise.resolve('')
+                      })
+      })
+      return Promise.all(x)
     })
     .then((data) => {
-      // once we have the response, only then do we dispatch an action to Redux
-      console.log('------------ response from query -----------')
-      console.log(data.data)
-      reply = data.data.result.fulfillment.speech
-      const sender = data.data.result.metadata.intentName ? data.data.result.metadata.intentName : data.data.result.action
-      return saveDialog(reply, req.body.session_id, sender)
-    })
-    .then((data) => {
+      let sumReply = ''
+      data.forEach((reply) => {
+        sumReply = `${sumReply} ${reply}`
+      })
       res.json({
-        message: reply
+        message: sumReply
       })
     })
     .catch((err) => {
