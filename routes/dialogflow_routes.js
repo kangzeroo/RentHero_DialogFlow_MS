@@ -3,6 +3,7 @@ const uuid = require('uuid')
 const saveSessionAndAdIds = require('./Postgres/Queries/AdQueries').saveSessionAndAdIds
 const saveDialog = require('../DynamoDB/dialogflow_chat').saveDialog
 const mapIntentToDomain = require('../api/knowledge_domains/domain_mapper').mapIntentToDomain
+const queryDynamoChatForAds = require('../DynamoDB/comms_chatbot_query').queryDynamoChatForAds
 
 exports.init_dialogflow = function(req, res, next) {
   console.log(req.body)
@@ -143,6 +144,19 @@ exports.dialogflow_fulfillment_renthero = function(req, res, next) {
       "outputContexts": []
     })
   }
+}
+
+exports.get_chatbot_logs_for_ad = function(req, res, next) {
+  const info = req.body
+
+  queryDynamoChatForAds(info.ad_id)
+  .then((data) => {
+    res.json(data)
+  })
+  .catch((err) => {
+    console.log(err)
+    res.status(500).send('Failed to get chatbot logs')
+  })
 }
 
 /*
