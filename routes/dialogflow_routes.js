@@ -54,7 +54,7 @@ exports.send_message = function(req, res, next) {
       Authorization: 'Bearer 4afa72ac700648908ae87130f11e0a9e'
     }
   }
-  saveDialog(req.body.message, req.body.session_id, req.body.session_id)
+  saveDialog(req.body.message, req.body.session_id, req.body.session_id, req.body.ad_id)
     .then((data) => {
       const sentences = req.body.message.split(/[.!?\n\r]/gi)
       console.log(sentences)
@@ -74,7 +74,7 @@ exports.send_message = function(req, res, next) {
                         console.log(data.data)
                         reply = data.data.result.fulfillment.speech
                         const sender = data.data.result.metadata.intentName ? data.data.result.metadata.intentName : data.data.result.action
-                        return saveDialog(reply, req.body.session_id, sender)
+                        return saveDialog(reply, req.body.session_id, sender, req.body.ad_id)
                       })
                       .then((data) => {
                         return Promise.resolve(reply)
