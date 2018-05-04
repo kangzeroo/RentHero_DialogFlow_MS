@@ -15,11 +15,11 @@ const stringify_rows = res => res.rows.map(row => JSON.stringify(row))
 
 const json_rows = res => res.map(row => JSON.parse(row))
 
-exports.saveFirebaseClientIDAndTenantRelationship = (tenant_id, firebase_client_id) => {
+exports.saveFirebaseClientIDAndTenantRelationship = (session_id, firebase_client_id) => {
   const p = new Promise((res, rej) => {
-    const values = [tenant_id, firebase_client_id]
+    const values = [session_id, firebase_client_id]
 
-    const insert_relationship = `INSERT INTO firebase_device_relationship (tenant_id, firebase_client_id) VALUES ($1, $2) ON CONFLICT (tenant_id) DO UPDATE SET firebase_client_id = $2`
+    const insert_relationship = `INSERT INTO firebase_device_relationship (session_id, firebase_client_id) VALUES ($1, $2) ON CONFLICT (session_id) DO UPDATE SET firebase_client_id = $2, updated_at = CURRENT_TIMESTAMP`
 
     query(insert_relationship, values)
     .then(() => {
@@ -36,11 +36,11 @@ exports.saveFirebaseClientIDAndTenantRelationship = (tenant_id, firebase_client_
 }
 
 
-exports.getFirebaseClientIDFromTenantId = (tenant_id) => {
+exports.getFirebaseClientIDFromTenantId = (session_id) => {
   const p = new Promise((res, rej) => {
-    const values = [tenant_id]
+    const values = [session_id]
 
-    const get_relationship = `SELECT * FROM firebase_device_relationship WHERE tenant_id = $1`
+    const get_relationship = `SELECT * FROM firebase_device_relationship WHERE session_id = $1`
 
     const return_rows = (rows) => {
       return rows[0]
