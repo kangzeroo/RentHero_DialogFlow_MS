@@ -70,26 +70,27 @@ exports.send_message = function(req, res, next) {
           "timezone": "America/New_York"
         }
         let reply = ''
+        let sender = ''
         return axios.post(`https://api.dialogflow.com/api/query?v=20150910`, params, headers)
                       .then((data) => {
-                        // once we have the response, only then do we dispatch an action to Redux
                         console.log('------------ response from query -----------')
                         console.log(data.data)
                         reply = data.data.result.fulfillment.speech
-                        const sender = data.data.result.metadata.intentName ? data.data.result.metadata.intentName : data.data.result.action
-                        console.log('SAVING DIALOGFLOW!!!')
-                        return saveDialog(reply, req.body.session_id, sender, req.body.ad_id)
-                      })
-                      .then((data) => {
+                        sender = data.data.result.metadata.intentName ? data.data.result.metadata.intentName : data.data.result.action
                         console.log('PUSH NOTIFICATIONS!!!')
                         let pushNotification = {
-                        	"session_id": req.body.session_id,
-                        	"notification": {
+                          "session_id": req.body.session_id,
+                          "notification": {
                             "body" : reply,
                             "title" : "New Message from RentHero AI"
                           }
                         }
                         return axios.post(`https://renthero.host:8401/send_notification`, pushNotification, headers)
+                      })
+                      .then((data) => {
+                        // once we have the response, only then do we dispatch an action to Redux
+                        console.log('SAVING DIALOGFLOW!!!')
+                        return saveDialog(reply, req.body.session_id, sender, req.body.ad_id)
                       })
                       .then((data) => {
                         return Promise.resolve(reply)
