@@ -8,19 +8,18 @@ const rentheroCommLogsTableParams = {
     TableName : RENTHERO_COMM_LOGS,
     KeySchema: [
         // USE CASE: ALLOWS ME TO SEE ALL USER PREFERENCES INTEL IN CHRONOLOGICAL ORDER. EG: USER LOOKS FOR ENSUITE FIRST BEFORE CHANGING THEIR FILTERS TO LOOK FOR LESS ROOMATES NO ENSUITE
-        { AttributeName: "CHANNEL_ID", KeyType: "HASH" },  //Partition key
-        { AttributeName: "DATETIME", KeyType: "RANGE" },  //Sort key
+        { AttributeName: "AD_ID", KeyType: "HASH" },  //Partition key
+        { AttributeName: "MESSAGE_ID", KeyType: "RANGE" },  //Sort key
     ],
     AttributeDefinitions: [
         { AttributeName: "MESSAGE_ID", AttributeType: "S" },
+        { AttributeName: "AD_ID", AttributeType: "S" },
         { AttributeName: "CHANNEL_ID", AttributeType: "S" },
-        { AttributeName: "CORPORATION_ID", AttributeType: "S" },
         // { AttributeName: "STAFF_ID", AttributeType: "S" },
         // { AttributeName: "MEDIUM", AttributeType: "S" },
         // { AttributeName: "CONTACT_ID", AttributeType: "S" },
         // { AttributeName: "MESSAGE", AttributeType: "S" },
-        { AttributeName: "DATETIME", AttributeType: "S" },
-        { AttributeName: "CHANNEL_ID_DATETIME", AttributeType: "S" },
+        { AttributeName: "DATETIME", AttributeType: "S" }
     ],
     ProvisionedThroughput: {
         ReadCapacityUnits: 10,
@@ -29,10 +28,10 @@ const rentheroCommLogsTableParams = {
     GlobalSecondaryIndexes: [
       {
         // USE CASE: ALLOWS ME TO SEE ALL INTEL OF A SPECIFIC ACTION, GROUPED BY USERS. EG: SHOW ME ALL PRICE ADJUSTMENTS, AND NOW I CAN GROUP USER POPULATIONS INTO PRICE RANGES.
-        IndexName: 'By_Corporation_ID', /* required */
+        IndexName: 'By_Channel_ID', /* required */
         KeySchema: [ /* required */
-          {AttributeName: 'CORPORATION_ID', KeyType: 'HASH'},
-          {AttributeName: 'CHANNEL_ID_DATETIME', KeyType: 'RANGE'}
+          {AttributeName: 'CHANNEL_ID', KeyType: 'HASH'},
+          {AttributeName: 'MESSAGE_ID', KeyType: 'RANGE'}
         ],
         Projection: { /* required */
           ProjectionType: 'ALL'

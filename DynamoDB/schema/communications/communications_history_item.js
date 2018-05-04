@@ -45,19 +45,5 @@ exports.reference_items = [
       'CHANNEL_ID_DATETIME': 'STRING_FROM_TWILIO+43563456456',
       'MESSAGE': 'Still available?'
     }
-  },
-  {
-    'TableName': RENTHERO_COMM_LOGS,
-    'Item': {
-      'MESSAGE_ID': 'uuid.v4()',
-      'CHANNEL_ID': 'session_id from DialogFlow',
-      'DATETIME': 43563456456,
-      'TIMEZONE': 'UTC-05',
-      'STAFF_ID': 'CHATBOT_ID',
-      'MEDIUM': 'RENTHERO.AI.LANDLORD',
-      'CONTACT_ID': 'TENANT_ID',
-      'CHANNEL_ID_DATETIME': 'STRING_FROM_TWILIO+43563456456',
-      'MESSAGE': 'Still available?'
-    }
   }
 ]

@@ -8,7 +8,6 @@ const bodyParser = require('body-parser')
 // routes
 const Test = require('./routes/test_routes')
 const DialogFlow = require('./routes/dialogflow_routes')
-const FCM = require('./routes/fcm_routes')
 
 // bodyParser attempts to parse any request into JSON format
 const json_encoding = bodyParser.json({type:'*/*'})
@@ -18,13 +17,8 @@ module.exports = function(app){
 	// routes
 	app.get('/test', json_encoding, Test.test)
 
-	// firebase cloud messaging
-	app.post('/save_firebase_client', [json_encoding], FCM.save_firebase_client)
-	app.post('/send_notification', [json_encoding], FCM.send_notification)
-
 	// dialogflow
 	app.post('/init_dialogflow', [json_encoding], DialogFlow.init_dialogflow)
 	app.post('/send_message', [json_encoding], DialogFlow.send_message)
 	app.post('/dialogflow_fulfillment_renthero', [json_encoding], DialogFlow.dialogflow_fulfillment_renthero)
-	app.post('/get_chatbot_logs_for_ad', [json_encoding], DialogFlow.get_chatbot_logs_for_ad)
 }

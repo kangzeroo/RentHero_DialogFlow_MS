@@ -15,7 +15,7 @@ const stringify_rows = res => res.rows.map(row => JSON.stringify(row))
 
 const json_rows = res => res.map(row => JSON.parse(row))
 
-exports.saveFirebaseClientIDAndTenantRelationship = (session_id, firebase_client_id) => {
+exports.saveFirebaseClientIDAndSessionRelationship = (session_id, firebase_client_id) => {
   const p = new Promise((res, rej) => {
     const values = [session_id, firebase_client_id]
 
@@ -36,7 +36,7 @@ exports.saveFirebaseClientIDAndTenantRelationship = (session_id, firebase_client
 }
 
 
-exports.getFirebaseClientIDFromTenantId = (session_id) => {
+exports.getFirebaseClientIDFromSessionId = (session_id) => {
   const p = new Promise((res, rej) => {
     const values = [session_id]
 

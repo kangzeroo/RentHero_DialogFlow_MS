@@ -6,7 +6,6 @@ const fs = require('fs')
 const morgan = require('morgan')
 const router = require('./router')
 const cors = require('cors')
-
 const app = express()
 
 // Database setup
@@ -21,7 +20,6 @@ app.use(cors());
 
 // we instantiate the router function that defines all our HTTP route endpoints
 router(app);
-
 // Server setup
 // if there is an environment variable of PORT already defined, use it. otherwise use port 3002
 const port = process.env.PORT || 8302

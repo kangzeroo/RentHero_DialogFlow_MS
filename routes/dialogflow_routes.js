@@ -12,7 +12,7 @@ exports.init_dialogflow = function(req, res, next) {
   const session_id = uuid.v4()
   const params = {
     'event': {
-      'name': 'renthero-init',
+      'name': 'renthero-landlord-ai-init',
       'data': {
         'ad_id': ad_id
       }
@@ -23,7 +23,8 @@ exports.init_dialogflow = function(req, res, next) {
   }
   const headers = {
     headers: {
-      Authorization: 'Bearer 4afa72ac700648908ae87130f11e0a9e'
+      // be sure to change this from dev to prod agent tokens!
+      Authorization: 'Bearer e01856f3c5eb49eb8bb06cfef505f3d3'
     }
   }
   saveSessionAndAdIds(session_id, ad_id)
@@ -32,7 +33,8 @@ exports.init_dialogflow = function(req, res, next) {
     })
     .then((data) => {
       // once we have the response, only then do we dispatch an action to Redux
-      // console.log(data.data)
+      console.log(data.data)
+      console.log(session_id)
       res.json({
         message: data.data.result.fulfillment.speech,
         session_id: session_id
@@ -75,7 +77,19 @@ exports.send_message = function(req, res, next) {
                         console.log(data.data)
                         reply = data.data.result.fulfillment.speech
                         const sender = data.data.result.metadata.intentName ? data.data.result.metadata.intentName : data.data.result.action
+                        console.log('SAVING DIALOGFLOW!!!')
                         return saveDialog(reply, req.body.session_id, sender, req.body.ad_id)
+                      })
+                      .then((data) => {
+                        console.log('PUSH NOTIFICATIONS!!!')
+                        let pushNotification = {
+                        	"session_id": req.body.session_id,
+                        	"notification": {
+                            "body" : reply,
+                            "title" : "New Message from RentHero AI"
+                          }
+                        }
+                        return axios.post(`https://renthero.host:8401/send_notification`, pushNotification, headers)
                       })
                       .then((data) => {
                         return Promise.resolve(reply)
@@ -144,19 +158,6 @@ exports.dialogflow_fulfillment_renthero = function(req, res, next) {
       "outputContexts": []
     })
   }
-}
-
-exports.get_chatbot_logs_for_ad = function(req, res, next) {
-  const info = req.body
-
-  queryDynamoChatForAds(info.ad_id)
-  .then((data) => {
-    res.json(data)
-  })
-  .catch((err) => {
-    console.log(err)
-    res.status(500).send('Failed to get chatbot logs')
-  })
 }
 
 /*
