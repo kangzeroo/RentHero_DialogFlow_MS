@@ -4,6 +4,9 @@ const saveSessionAndAdIds = require('./Postgres/Queries/AdQueries').saveSessionA
 const saveDialog = require('../DynamoDB/dialogflow_chat').saveDialog
 const mapIntentToDomain = require('../api/knowledge_domains/domain_mapper').mapIntentToDomain
 const queryDynamoChatForAds = require('../DynamoDB/comms_chatbot_query').queryDynamoChatForAds
+const CLIENT_ACCESS_KEY = require('../credentials/'+process.env.NODE_ENV+'/dialogflow_config').CLIENT_ACCESS_KEY
+const DEVELOPER_ACCESS_KEY = require('../credentials/'+process.env.NODE_ENV+'/dialogflow_config').DEVELOPER_ACCESS_KEY
+const FCM_MS = require('../credentials/'+process.env.NODE_ENV+'/API_URLs').FCM_MS
 
 exports.init_dialogflow = function(req, res, next) {
   console.log(req.body)
@@ -24,7 +27,7 @@ exports.init_dialogflow = function(req, res, next) {
   const headers = {
     headers: {
       // be sure to change this from dev to prod agent tokens!
-      Authorization: 'Bearer e01856f3c5eb49eb8bb06cfef505f3d3'
+      Authorization: `Bearer ${CLIENT_ACCESS_KEY}`
     }
   }
   saveSessionAndAdIds(session_id, ad_id)
@@ -54,7 +57,7 @@ exports.send_message = function(req, res, next) {
   console.log(req.body)
   const headers = {
     headers: {
-      Authorization: 'Bearer 4afa72ac700648908ae87130f11e0a9e'
+      Authorization: `Bearer ${DEVELOPER_ACCESS_KEY}`
     }
   }
   saveDialog(req.body.message, req.body.session_id, req.body.session_id, req.body.ad_id)
@@ -85,7 +88,7 @@ exports.send_message = function(req, res, next) {
                             "title" : "New Message from RentHero AI"
                           }
                         }
-                        return axios.post(`https://cf4edbb0.ngrok.io/send_notification`, pushNotification, headers)
+                        return axios.post(`${FCM_MS}/send_notification`, pushNotification, headers)
                       })
                       .then((data) => {
                         // once we have the response, only then do we dispatch an action to Redux
@@ -127,7 +130,7 @@ exports.dialogflow_fulfillment_renthero = function(req, res, next) {
   let reply = ''
   const headers = {
     headers: {
-      Authorization: 'Bearer 4afa72ac700648908ae87130f11e0a9e'
+      Authorization: `Bearer ${DEVELOPER_ACCESS_KEY}`
     }
   }
   if (req.body.queryResult.intent) {
