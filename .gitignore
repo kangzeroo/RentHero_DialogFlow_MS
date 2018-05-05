@@ -1,4 +1,5 @@
 node_modules/*
 credentials/*
+backup_creds/*
 .env
 .DS_STORE

@@ -2,13 +2,9 @@
 const AWS = require('aws-sdk')
 const dynaDoc = require("dynamodb-doc");
 const path = require('path')
-const pathToAWSConfig = path.join(__dirname, '..', 'credentials', 'aws_config.json')
+const pathToAWSConfig = path.join(__dirname, '..', 'credentials', process.env.NODE_ENV, 'aws_config.json')
 const aws_config = require(pathToAWSConfig)
 AWS.config.update(aws_config)
-// AWS.config.update(aws_config)
-// console.log(pathToAWSConfig)
-// AWS.config.loadFromPath('../credentials/aws_config.json')
-// console.log(aws_config)
 const dynamodb = new AWS.DynamoDB({
   dynamodb: '2012-08-10',
   region: "us-east-1"
