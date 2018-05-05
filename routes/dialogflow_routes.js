@@ -85,7 +85,7 @@ exports.send_message = function(req, res, next) {
                             "title" : "New Message from RentHero AI"
                           }
                         }
-                        return axios.post(`https://renthero.host:8401/send_notification`, pushNotification, headers)
+                        return axios.post(`https://cf4edbb0.ngrok.io/send_notification`, pushNotification, headers)
                       })
                       .then((data) => {
                         // once we have the response, only then do we dispatch an action to Redux

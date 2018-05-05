@@ -28,33 +28,47 @@ const port = process.env.PORT || 8302
 if (process.env.NODE_ENV === 'production') {
   // instantiate the SSL certificate necessary for HTTPS
   const options = {
-      ca: fs.readFileSync('./credentials/rentburrow_com.ca-bundle'),
-      key: fs.readFileSync('./credentials/rentburrow_com.key'),
-      cert: fs.readFileSync('./credentials/rentburrow_com.crt'),
+      ca: fs.readFileSync('./credentials/production/rentburrow_com.ca-bundle'),
+      key: fs.readFileSync('./credentials/production/rentburrow_com.key'),
+      cert: fs.readFileSync('./credentials/production/rentburrow_com.crt'),
       requestCert: false,
       rejectUnauthorized: false
   }
   const server = https.createServer(options, app)
   // listen to the server on port
   server.listen(port, function(){
-    console.log("Server listening on https: ", port)
+    console.log("Prod server listening on https: ", port)
+  })
+} else if (process.env.NODE_ENV === 'staging') {
+  // instantiate the SSL certificate necessary for HTTPS
+  const options = {
+      ca: fs.readFileSync('./credentials/staging/renthero_host.ca-bundle'),
+      key: fs.readFileSync('./credentials/staging/renthero_host.key'),
+      cert: fs.readFileSync('./credentials/staging/renthero_host.crt'),
+      requestCert: false,
+      rejectUnauthorized: false
+  }
+  const server = https.createServer(options, app)
+  // listen to the server on port
+  server.listen(port, function(){
+    console.log("Staging server listening on https: ", port)
   })
 } else {
   // instantiate the SSL certificate necessary for HTTPS
   const options = {
-      ca: fs.readFileSync('./credentials/renthero_host.ca-bundle'),
-      key: fs.readFileSync('./credentials/renthero_host.key'),
-      cert: fs.readFileSync('./credentials/renthero_host.crt'),
+      ca: fs.readFileSync('./credentials/development/renthero_host.ca-bundle'),
+      key: fs.readFileSync('./credentials/development/renthero_host.key'),
+      cert: fs.readFileSync('./credentials/development/renthero_host.crt'),
       requestCert: false,
       rejectUnauthorized: false
   }
   const server = https.createServer(options, app)
   // listen to the server on port
   server.listen(port, function(){
-    console.log("Server listening on https: ", port)
+    console.log("Dev server listening on https: ", port)
   })
   // const server = http.createServer(app)
   // server.listen(port, function(){
-  //   console.log("Server listening on http: ", port)
+  //   console.log("Dev server listening on http: ", port)
   // })
 }
