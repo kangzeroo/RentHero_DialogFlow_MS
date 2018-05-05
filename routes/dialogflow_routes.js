@@ -161,6 +161,19 @@ exports.dialogflow_fulfillment_renthero = function(req, res, next) {
   }
 }
 
+exports.get_chatbot_logs_for_ad = function(req, res, next) {
+  const info = req.body
+
+  queryDynamoChatForAds(info.ad_id)
+  .then((data) => {
+    res.json(data)
+  })
+  .catch((err) => {
+    console.log(err)
+    res.status(500).send('Failed to get chatbot logs')
+  })
+}
+
 /*
 
 // INIT A DIALOGFLOW CHAT
