@@ -64,7 +64,8 @@ exports.send_message = function(req, res, next) {
     .then((data) => {
       const sentences = req.body.message.split(/[.!?\n\r]/gi)
       console.log(sentences)
-      const x = sentences.map((sent) => {
+      const x = sentences.filter(sent => sent).map((sent) => {
+        console.log('===SENT: ', sent)
         let params = {
           "contexts": [],
           "lang": "en",
@@ -78,6 +79,7 @@ exports.send_message = function(req, res, next) {
                       .then((data) => {
                         console.log('------------ response from query -----------')
                         console.log(data.data)
+                        console.log(data.data.result.fulfillment.messages)
                         reply = data.data.result.fulfillment.speech
                         sender = data.data.result.metadata.intentName ? data.data.result.metadata.intentName : data.data.result.action
                         console.log('PUSH NOTIFICATIONS!!!')
@@ -99,6 +101,7 @@ exports.send_message = function(req, res, next) {
                         return Promise.resolve(reply)
                       })
                       .catch((err) => {
+                        console.log(err.response.data)
                         return Promise.resolve('')
                       })
       })
