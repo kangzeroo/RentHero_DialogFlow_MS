@@ -54,7 +54,7 @@ if (process.env.NODE_ENV === 'production') {
     console.log("Staging server listening on https: ", port)
   })
 } else if (process.env.NODE_ENV === 'development') {
-  instantiate the SSL certificate necessary for HTTPS
+  // instantiate the SSL certificate necessary for HTTPS
   const options = {
       ca: fs.readFileSync('./credentials/development/renthero_host.ca-bundle'),
       key: fs.readFileSync('./credentials/development/renthero_host.key'),
