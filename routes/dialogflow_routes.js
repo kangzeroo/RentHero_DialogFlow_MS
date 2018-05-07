@@ -11,6 +11,7 @@ const FCM_MS = require('../credentials/'+process.env.NODE_ENV+'/API_URLs').FCM_M
 exports.init_dialogflow = function(req, res, next) {
   console.log(req.body)
   console.log('--------- init_dialogflow')
+  console.log(req.header)
   const ad_id = req.body.ad_id
   const session_id = uuid.v4()
   const params = {
@@ -82,15 +83,19 @@ exports.send_message = function(req, res, next) {
                         console.log(data.data.result.fulfillment.messages)
                         reply = data.data.result.fulfillment.speech
                         sender = data.data.result.metadata.intentName ? data.data.result.metadata.intentName : data.data.result.action
-                        console.log('PUSH NOTIFICATIONS!!!')
-                        let pushNotification = {
-                          "session_id": req.body.session_id,
-                          "notification": {
-                            "body" : reply,
-                            "title" : "New Message from RentHero AI"
+                        if (req.headers.push_notifications === 'granted') {
+                          console.log('PUSH NOTIFICATIONS!!!')
+                          let pushNotification = {
+                            "session_id": req.body.session_id,
+                            "notification": {
+                              "body" : reply,
+                              "title" : "New Message from RentHero AI"
+                            }
                           }
+                          return axios.post(`${FCM_MS}/send_notification`, pushNotification, headers)
+                        } else {
+                          return Promise.resolve()
                         }
-                        return axios.post(`${FCM_MS}/send_notification`, pushNotification, headers)
                       })
                       .then((data) => {
                         // once we have the response, only then do we dispatch an action to Redux
@@ -109,9 +114,11 @@ exports.send_message = function(req, res, next) {
     })
     .then((data) => {
       let sumReply = ''
-      data.forEach((reply) => {
-        sumReply = `${sumReply} ${reply}`
-      })
+      if (req.headers.push_notifications !== 'granted') {
+        data.forEach((reply) => {
+          sumReply = `${sumReply} ${reply}`
+        })
+      }
       res.json({
         message: sumReply
       })
