@@ -1,38 +1,38 @@
-let url = 'https://renthero.host'
+let S3_bucket = 'https://s3.amazonaws.com/renthero-ai-mappings/'
 
 exports.domain_mappings = {
   domains: [
     {
       domain_prefix: ".META",
-      endpoint: "https://renthero.host:8302/dialogflow"
+      endpoint: `${S3_bucket}knowledge_domains/${process.env.NODE_ENV}/meta_intents.json`
     },
     {
       domain_prefix: ".SEARCHING",
-      endpoint: "https://renthero.host:8304/dialogflow"
+      endpoint: `${S3_bucket}knowledge_domains/${process.env.NODE_ENV}/searching_intents.json`
     },
     {
       domain_prefix: ".GENERAL",
-      endpoint: "https://renthero.host:8305/dialogflow"
+      endpoint: `${S3_bucket}knowledge_domains/${process.env.NODE_ENV}/general_intents.json`
     },
     {
       domain_prefix: ".SPECIFIC_STRUC",
-      endpoint: "https://renthero.host:8303/dialogflow_sql_answers"
+      endpoint: `${S3_bucket}knowledge_domains/${process.env.NODE_ENV}/specific_struc_intents.json`
     },
     {
       domain_prefix: ".SPECIFIC_UNSTRUC",
-      endpoint: "https://renthero.host:8303/dialogflow_typeform_answers"
+      endpoint: `${S3_bucket}knowledge_domains/${process.env.NODE_ENV}/specific_unstruc_intents.json`
     },
     {
       domain_prefix: ".TOURS",
-      endpoint: "https://renthero.host:8304/dialogflow"
+      endpoint: `${S3_bucket}knowledge_domains/${process.env.NODE_ENV}/tours_intents.json`
     },
     {
-      domain_prefix: ".NEEDS_HUMAN",
-      endpoint: "https://renthero.host:8307/dialogflow"
+      domain_prefix: ".HUMAN",
+      endpoint: `${S3_bucket}knowledge_domains/${process.env.NODE_ENV}/human_intents.json`
     },
     {
-      domain_prefix: ".GEO_HELP",
-      endpoint: "https://renthero.host:8306/dialogflow"
+      domain_prefix: ".GEO",
+      endpoint: `${S3_bucket}knowledge_domains/${process.env.NODE_ENV}/geo_intents.json`
     }
   ]
 }
