@@ -138,8 +138,8 @@ exports.dialogflow_fulfillment_renthero = function(req, res, next) {
     const intentName = req.body.queryResult.intent.displayName
 
     mapIntentToDomain(intentName)
-      .then((domain) => {
-        return axios.post(domain.endpoint, req.body, headers)
+      .then((endpoint) => {
+        return axios.post(endpoint, req.body, headers)
       })
       .then((answer) => {
         res.json({
