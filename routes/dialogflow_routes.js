@@ -139,9 +139,10 @@ exports.dialogflow_fulfillment_renthero = function(req, res, next) {
   if (req.body.queryResult.intent) {
     const intentID = req.body.queryResult.intent.name
     const intentName = req.body.queryResult.intent.displayName
-
+    console.log('=====> DIALOG FLOW FULFILLMENT')
     mapIntentToDomain(intentName)
       .then((endpoint) => {
+        console.log(endpoint)
         return axios.post(endpoint, req.body, headers)
       })
       .then((answer) => {
@@ -169,7 +170,7 @@ exports.dialogflow_fulfillment_renthero = function(req, res, next) {
 
 exports.get_chatbot_logs_for_ad = function(req, res, next) {
   const info = req.body
-
+  console.log(req.body)
   queryDynamoChatForAds(info.ad_id)
   .then((data) => {
     res.json(data)
