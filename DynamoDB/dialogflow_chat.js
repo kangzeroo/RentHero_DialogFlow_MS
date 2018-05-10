@@ -16,7 +16,7 @@ exports.saveDialog = function(msg, session_id, sender_id, ad_id) {
         'STAFF_ID': sender_id,
         'MEDIUM': 'RENTHERO.AI.LANDLORD',
         'CONTACT_ID': sender_id,
-        'MESSAGE': msg
+        'MESSAGE': msg || 'empty'
       }
     }
     console.log(item)
