@@ -41,6 +41,7 @@ exports.init_dialogflow = function(req, res, next) {
       console.log(session_id)
       res.json({
         message: data.data.result.fulfillment.speech,
+        payload: data.data.result.fulfillment.data,
         session_id: session_id
       })
     })
@@ -61,6 +62,7 @@ exports.send_message = function(req, res, next) {
       Authorization: `Bearer ${DEVELOPER_ACCESS_KEY}`
     }
   }
+  let payload = null
   saveDialog(req.body.message, req.body.session_id, req.body.session_id, req.body.ad_id)
     .then((data) => {
       const sentences = req.body.message.split(/[.!?\n\r]/gi)
@@ -79,17 +81,21 @@ exports.send_message = function(req, res, next) {
         return axios.post(`https://api.dialogflow.com/api/query?v=20150910`, params, headers)
                       .then((data) => {
                         console.log('------------ response from query -----------')
+                        console.log(data.data.result)
+                        console.log('------------ response from query -----------')
                         console.log(data.data)
                         console.log(data.data.result.fulfillment.messages)
                         reply = data.data.result.fulfillment.speech
                         sender = data.data.result.metadata.intentName ? data.data.result.metadata.intentName : data.data.result.action
+                        payload = data.data.result.fulfillment.data
                         if (req.headers.push_notifications === 'granted') {
                           console.log('PUSH NOTIFICATIONS!!!')
                           let pushNotification = {
                             "session_id": req.body.session_id,
                             "notification": {
                               "body" : reply,
-                              "title" : "New Message from RentHero AI"
+                              "title" : "New Message from RentHero AI",
+                              "payload": payload,
                             }
                           }
                           return axios.post(`${FCM_MS}/send_notification`, pushNotification, headers)
@@ -120,7 +126,8 @@ exports.send_message = function(req, res, next) {
         })
       }
       res.json({
-        message: sumReply
+        message: sumReply,
+        payload: payload
       })
     })
     .catch((err) => {
@@ -153,10 +160,13 @@ exports.dialogflow_fulfillment_renthero = function(req, res, next) {
         return axios.post(endpoint, req.body, headers)
       })
       .then((answer) => {
+        console.log('======> ANSWER FOUND')
+        console.log(answer.data)
         res.json({
           "fulfillmentText": answer.data.fulfillmentText,
           "fulfillmentMessages": answer.data.fulfillmentMessages,
-          "outputContexts": answer.data.outputContexts
+          "outputContexts": answer.data.outputContexts,
+          "payload": answer.data.payload,
         })
       })
       .catch((err) => {
