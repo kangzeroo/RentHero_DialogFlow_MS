@@ -3,6 +3,10 @@ let S3_bucket = 'https://s3.amazonaws.com/renthero-ai-mappings/'
 exports.domain_mappings = {
   domains: [
     {
+      domain_prefix: "INIT",
+      s3_mapping: `${S3_bucket}knowledge_domains/${process.env.NODE_ENV}/init_intents.json`
+    },
+    {
       domain_prefix: "META",
       s3_mapping: `${S3_bucket}knowledge_domains/${process.env.NODE_ENV}/meta_intents.json`
     },
