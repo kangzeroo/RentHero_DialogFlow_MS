@@ -3,7 +3,7 @@ const moment = require('moment')
 const insertItem = require('./general_insertions').insertItem
 const RENTHERO_COMM_LOGS = require('./schema/dynamodb_tablenames').RENTHERO_COMM_LOGS
 
-exports.saveDialog = function(msg, session_id, sender_id, ad_id) {
+exports.saveDialog = function(msg, session_id, sender_id, ad_id, payload) {
   const p = new Promise((res, rej) => {
     const timestamp = moment().toISOString()
     const item = {
@@ -16,7 +16,8 @@ exports.saveDialog = function(msg, session_id, sender_id, ad_id) {
         'STAFF_ID': sender_id,
         'MEDIUM': 'RENTHERO.AI.LANDLORD',
         'CONTACT_ID': sender_id,
-        'MESSAGE': msg || 'empty'
+        'MESSAGE': msg || 'empty',
+        'PAYLOAD': payload ? JSON.stringify(payload) : JSON.stringify({ status: 'no payload' })
       }
     }
     console.log(item)

@@ -95,8 +95,8 @@ exports.send_message = function(req, res, next) {
                             "notification": {
                               "body" : reply,
                               "title" : "New Message from RentHero AI",
-                              "payload": payload,
-                            }
+                            },
+                            "data": payload
                           }
                           return axios.post(`${FCM_MS}/send_notification`, pushNotification, headers)
                         } else {
@@ -106,7 +106,7 @@ exports.send_message = function(req, res, next) {
                       .then((data) => {
                         // once we have the response, only then do we dispatch an action to Redux
                         console.log('SAVING DIALOGFLOW!!!')
-                        return saveDialog(reply, req.body.session_id, sender, req.body.ad_id)
+                        return saveDialog(reply, req.body.session_id, sender, req.body.ad_id, payload)
                       })
                       .then((data) => {
                         return Promise.resolve(reply)
