@@ -1,5 +1,6 @@
 const axios = require('axios')
 const uuid = require('uuid')
+const moment = require('moment')
 const saveSessionAndAdIds = require('./Postgres/Queries/AdQueries').saveSessionAndAdIds
 const saveDialog = require('../DynamoDB/dialogflow_chat').saveDialog
 const mapIntentToDomain = require('../api/knowledge_domains/domain_mapper').mapIntentToDomain
@@ -56,7 +57,9 @@ exports.init_dialogflow = function(req, res, next) {
 
 exports.send_message = function(req, res, next) {
   console.log('------ SEND MESSAGE -------')
-  console.log(req.body)
+  console.log(moment().format('LTS'))
+
+  // console.log(req.body)
   const headers = {
     headers: {
       Authorization: `Bearer ${DEVELOPER_ACCESS_KEY}`
@@ -66,9 +69,11 @@ exports.send_message = function(req, res, next) {
   saveDialog(req.body.message, req.body.session_id, req.body.session_id, req.body.ad_id)
     .then((data) => {
       const sentences = req.body.message.split(/[.!?\n\r]/gi)
-      console.log(sentences)
+      // console.log(sentences)
       const x = sentences.filter(sent => sent).map((sent) => {
         console.log('===SENT: ', sent)
+        console.log(moment().format('LTS'))
+
         let params = {
           "contexts": [],
           "lang": "en",
@@ -81,10 +86,12 @@ exports.send_message = function(req, res, next) {
         return axios.post(`https://api.dialogflow.com/api/query?v=20150910`, params, headers)
                       .then((data) => {
                         console.log('------------ response from query -----------')
-                        console.log(data.data.result)
-                        console.log('------------ response from query -----------')
-                        console.log(data.data)
-                        console.log(data.data.result.fulfillment.messages)
+                        console.log(moment().format('LTS'))
+
+                        // console.log(data.data.result)
+                        // console.log('------------ response from query -----------')
+                        // console.log(data.data)
+                        // console.log(data.data.result.fulfillment.messages)
                         reply = data.data.result.fulfillment.speech
                         sender = data.data.result.metadata.intentName ? data.data.result.metadata.intentName : data.data.result.action
                         payload = data.data.result.fulfillment.data
@@ -139,9 +146,10 @@ exports.send_message = function(req, res, next) {
 
 exports.dialogflow_fulfillment_renthero = function(req, res, next) {
   console.log('------ DIALOG FLOW FULFILLMENT -------')
-  console.log(req.body)
-  console.log(req.body.queryResult.fulfillmentMessages[0].text.text)
-  console.log('-------')
+  console.log(moment().format('LTS'))
+  // console.log(req.body)
+  // console.log(req.body.queryResult.fulfillmentMessages[0].text.text)
+  // console.log('-------')
   const sessionID = req.body.session.slice(req.body.session.indexOf('/sessions/') + '/sessions/'.length)
   let ad_id = ''
   let reply = ''
@@ -157,11 +165,14 @@ exports.dialogflow_fulfillment_renthero = function(req, res, next) {
     mapIntentToDomain(intentName)
       .then((endpoint) => {
         console.log(endpoint)
+        console.log(moment().format('LTS'))
         return axios.post(endpoint, req.body, headers)
       })
       .then((answer) => {
         console.log('======> ANSWER FOUND')
-        console.log(answer.data)
+        console.log(moment().format('LTS'))
+
+        // console.log(answer.data)
         res.json({
           "fulfillmentText": answer.data.fulfillmentText,
           "fulfillmentMessages": answer.data.fulfillmentMessages,
