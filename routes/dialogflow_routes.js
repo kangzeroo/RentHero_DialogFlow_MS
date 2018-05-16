@@ -12,28 +12,34 @@ const FCM_MS = require('../credentials/'+process.env.NODE_ENV+'/API_URLs').FCM_M
 exports.init_dialogflow = function(req, res, next) {
   console.log(req.body)
   console.log('--------- init_dialogflow')
-  console.log(req.header)
+  // console.log(req.header)
   const ad_id = req.body.ad_id
-  const session_id = uuid.v4()
-  const params = {
-    'event': {
-      'name': 'renthero-landlord-ai-init',
-      'data': {
-        'ad_id': ad_id
-      }
-    },
-    'timezone':'America/New_York',
-    'lang':'en',
-    'sessionId': session_id
-  }
+  const identity_id = req.body.identityId
+  const bot_id = req.body.botId
+  let session_id = req.body.session_id || uuid.v4()
+  console.log('session_id: ', session_id)
   const headers = {
     headers: {
       // be sure to change this from dev to prod agent tokens!
       Authorization: `Bearer ${CLIENT_ACCESS_KEY}`
     }
   }
-  saveSessionAndAdIds(session_id, ad_id)
-    .then((data) => {
+  saveSessionAndAdIds(session_id, ad_id, identity_id, bot_id)
+    .then((session) => {
+      console.log('session_id: ', session)
+      session_id = session
+      const params = {
+        'event': {
+          'name': 'renthero-landlord-ai-init',
+          'data': {
+            'ad_id': ad_id
+          }
+        },
+        'timezone':'America/New_York',
+        'lang':'en',
+        'sessionId': session,
+      }
+
       return axios.post(`https://api.dialogflow.com/api/query?v=20150910`, params, headers)
     })
     .then((data) => {
@@ -47,7 +53,7 @@ exports.init_dialogflow = function(req, res, next) {
       })
     })
     .catch((err) => {
-      // console.log(err)
+      console.log(err)
       res.json({
         message: 'Uh oh! Something wrong happened',
         session_id: session_id
@@ -59,6 +65,7 @@ exports.send_message = function(req, res, next) {
   console.log('------ SEND MESSAGE -------')
   console.log(moment().format('LTS'))
 
+  const info = req.body
   // console.log(req.body)
   const headers = {
     headers: {
@@ -66,7 +73,9 @@ exports.send_message = function(req, res, next) {
     }
   }
   let payload = null
-  saveDialog(req.body.message, req.body.session_id, req.body.session_id, req.body.ad_id)
+  // saveDialog(ad_id, channel_id, staff_id, contact_id, sender_id, msg, payload)
+  // saveDialog(req.body.message, req.body.session_id, req.body.session_id, req.body.ad_id)
+  saveDialog(info.ad_id, info.session_id, info.bot_id, info.identity_id, info.identity_id, info.message)
     .then((data) => {
       const sentences = req.body.message.split(/[.!?\n\r]/gi)
       // console.log(sentences)
@@ -113,7 +122,10 @@ exports.send_message = function(req, res, next) {
                       .then((data) => {
                         // once we have the response, only then do we dispatch an action to Redux
                         console.log('SAVING DIALOGFLOW!!!')
-                        return saveDialog(reply, req.body.session_id, sender, req.body.ad_id, payload)
+
+                        // saveDialog(ad_id, channel_id, staff_id, contact_id, sender_id, msg, payload)
+                        // return saveDialog(reply, req.body.session_id, sender, req.body.ad_id, payload)
+                        return saveDialog(info.ad_id, info.session_id, sender, info.identity_id, sender, reply, payload)
                       })
                       .then((data) => {
                         return Promise.resolve(reply)
