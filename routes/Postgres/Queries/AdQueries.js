@@ -19,16 +19,22 @@ const log_through = data => {
   return data
 }
 
-exports.saveSessionAndAdIds = (session_id, ad_id) => {
+exports.saveSessionAndAdIds = (session_id, ad_id, identity_id, bot_id) => {
   const p = new Promise((res, rej) => {
-    const values = [session_id, ad_id]
+    const values = [session_id, ad_id, identity_id, bot_id]
 
-    const insert_session = `INSERT INTO chat_session_ad (session_id, ad_id)
-                                 VALUES ($1, $2) RETURNING id`
+    const insert_session = `INSERT INTO sessions (session_id, ad_id, identity_id, bot_id)
+                                 VALUES ($1, $2, $3, $4)
+                                 ON CONFLICT (session_id, ad_id, identity_id)
+                                 DO UPDATE
+                                    SET bot_id = $4,
+                                        updated_at = CURRENT_TIMESTAMP
+                            RETURNING session_id
+                            `
 
     query(insert_session, values)
     .then((data) => {
-      res(data.rows[0].chat_id)
+      res(data.rows[0].session_id)
     })
     .catch((err) => {
       console.log(err)
@@ -42,7 +48,7 @@ exports.getAdIdFromSession = (session_id) => {
   const p = new Promise((res, rej) => {
     const values = [session_id]
 
-    const get_ad = `SELECT * FROM chat_session_ad WHERE session_id = $1`
+    const get_ad = `SELECT * FROM sessions WHERE session_id = $1`
 
     const return_rows = (rows) => {
       console.log(rows)
