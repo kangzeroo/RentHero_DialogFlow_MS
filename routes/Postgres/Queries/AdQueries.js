@@ -29,7 +29,7 @@ exports.saveSessionAndAdIds = (session_id, ad_id, identity_id, bot_id) => {
                                  DO UPDATE
                                     SET bot_id = $4,
                                         updated_at = CURRENT_TIMESTAMP
-                            RETURNING session_id
+                                 RETURNING session_id
                             `
 
     query(insert_session, values)

@@ -22,4 +22,5 @@ module.exports = function(app){
 	app.post('/send_message', [json_encoding], DialogFlow.send_message)
 	app.post('/dialogflow_fulfillment_renthero', [json_encoding], DialogFlow.dialogflow_fulfillment_renthero)
 	app.post('/get_chatbot_logs_for_ad', [json_encoding], DialogFlow.get_chatbot_logs_for_ad)
+	app.post('/dialogflow_property_question', [json_encoding], DialogFlow.dialogflow_property_question)
 }

@@ -17,7 +17,7 @@ exports.init_dialogflow = function(req, res, next) {
   const identity_id = req.body.identityId
   const bot_id = req.body.botId
   let session_id = req.body.session_id || uuid.v4()
-  console.log('session_id: ', session_id)
+  console.log('received session_id: ', session_id)
   const headers = {
     headers: {
       // be sure to change this from dev to prod agent tokens!
@@ -95,7 +95,7 @@ exports.send_message = function(req, res, next) {
         return axios.post(`https://api.dialogflow.com/api/query?v=20150910`, params, headers)
                       .then((data) => {
                         console.log('------------ response from query -----------')
-                        console.log(moment().format('LTS'))
+                        // console.log(moment().format('LTS'))
 
                         // console.log(data.data.result)
                         // console.log('------------ response from query -----------')
@@ -104,6 +104,7 @@ exports.send_message = function(req, res, next) {
                         reply = data.data.result.fulfillment.speech
                         sender = data.data.result.metadata.intentName ? data.data.result.metadata.intentName : data.data.result.action
                         payload = data.data.result.fulfillment.data
+                        // console.log(payload)
                         if (req.headers.push_notifications === 'granted') {
                           console.log('PUSH NOTIFICATIONS!!!')
                           let pushNotification = {
@@ -112,8 +113,9 @@ exports.send_message = function(req, res, next) {
                               "body" : reply,
                               "title" : "New Message from RentHero AI",
                             },
-                            "data": payload
+                            "data": payload,
                           }
+                          console.log(pushNotification)
                           return axios.post(`${FCM_MS}/send_notification`, pushNotification, headers)
                         } else {
                           return Promise.resolve()
@@ -138,6 +140,7 @@ exports.send_message = function(req, res, next) {
       return Promise.all(x)
     })
     .then((data) => {
+      // console.log('===>DATA: ', JSON.stringify(data))
       let sumReply = ''
       if (req.headers.push_notifications !== 'granted') {
         data.forEach((reply) => {
@@ -219,6 +222,81 @@ exports.get_chatbot_logs_for_ad = function(req, res, next) {
     console.log(err)
     res.status(500).send('Failed to get chatbot logs')
   })
+}
+
+exports.dialogflow_property_question = function(req, res, next) {
+  const ad_id = req.body.ad_id
+  const identity_id = req.body.identityId
+  const bot_id = req.body.botId
+  const session_id = req.body.session_id
+  const message = 'I have a question about the property!'
+
+  console.log('received session_id: ', session_id)
+
+  const headers = {
+    headers: {
+      // be sure to change this from dev to prod agent tokens!
+      Authorization: `Bearer ${CLIENT_ACCESS_KEY}`
+    }
+  }
+
+  const params = {
+    'event': {
+      'name': 'init-from-property-question',
+      'data': {
+        'ad_id': ad_id,
+      }
+    },
+    'timezone':'America/New_York',
+    'lang':'en',
+    'sessionId': session_id,
+  }
+
+  let reply = ''
+  let sender = ''
+  let payload = null
+
+  saveDialog(ad_id, session_id, bot_id, identity_id, identity_id, message)
+    .then((data) => {
+      return axios.post(`https://api.dialogflow.com/api/query?v=20150910`, params, headers)
+    })
+    .then((data) => {
+      reply = data.data.result.fulfillment.speech
+      sender = data.data.result.metadata.intentName ? data.data.result.metadata.intentName : data.data.result.action
+      payload = data.data.result.fulfillment.data
+      if (req.headers.push_notifications === 'granted') {
+        console.log('PUSH NOTIFICATIONS!!!')
+        let pushNotification = {
+          "session_id": req.body.session_id,
+          "notification": {
+            "body" : reply,
+            "title" : "New Message from RentHero AI",
+          },
+          "data": payload
+        }
+        return axios.post(`${FCM_MS}/send_notification`, pushNotification, headers)
+      } else {
+        return Promise.resolve()
+      }
+    })
+    .then((data) => {
+      console.log('SAVING DIALOGFLOW!!!')
+
+      // saveDialog(ad_id, channel_id, staff_id, contact_id, sender_id, msg, payload)
+      return saveDialog(ad_id, session_id, sender, identity_id, sender, reply, payload)
+    })
+    .then((data) => {
+      // return Promise.resolve(reply)
+      res.json({
+        message: 'Successfully sent',
+        session_id: session_id,
+      })
+    })
+    .catch((err) => {
+      console.log(err)
+      res.status(500).send('Failed to send selection')
+      // return Promise.resolve('')
+    })
 }
 
 /*
