@@ -75,7 +75,7 @@ exports.send_message = function(req, res, next) {
   let payload = null
   // saveDialog(ad_id, channel_id, staff_id, contact_id, sender_id, msg, payload)
   // saveDialog(req.body.message, req.body.session_id, req.body.session_id, req.body.ad_id)
-  saveDialog(info.ad_id, info.session_id, info.bot_id, info.identity_id, info.identity_id, info.message)
+  saveDialog(info.ad_id, info.session_id, info.bot_id, info.identity_id, 'TENANT_HUMAN', info.message)
     .then((data) => {
       const sentences = req.body.message.split(/[.!?\n\r]/gi)
       // console.log(sentences)
@@ -127,7 +127,7 @@ exports.send_message = function(req, res, next) {
 
                         // saveDialog(ad_id, channel_id, staff_id, contact_id, sender_id, msg, payload)
                         // return saveDialog(reply, req.body.session_id, sender, req.body.ad_id, payload)
-                        return saveDialog(info.ad_id, info.session_id, sender, info.identity_id, sender, reply, payload)
+                        return saveDialog(info.ad_id, info.session_id, info.identity_id, info.bot_id, 'LANDLORD_AI', reply, payload)
                       })
                       .then((data) => {
                         return Promise.resolve(reply)
@@ -256,7 +256,7 @@ exports.dialogflow_property_question = function(req, res, next) {
   let sender = ''
   let payload = null
 
-  saveDialog(ad_id, session_id, bot_id, identity_id, identity_id, message)
+  saveDialog(ad_id, session_id, bot_id, identity_id, 'TENANT_HUMAN', message)
     .then((data) => {
       return axios.post(`https://api.dialogflow.com/api/query?v=20150910`, params, headers)
     })
@@ -283,7 +283,7 @@ exports.dialogflow_property_question = function(req, res, next) {
       console.log('SAVING DIALOGFLOW!!!')
 
       // saveDialog(ad_id, channel_id, staff_id, contact_id, sender_id, msg, payload)
-      return saveDialog(ad_id, session_id, sender, identity_id, sender, reply, payload)
+      return saveDialog(ad_id, session_id, identity_id, bot_id, 'LANDLORD_AI', reply, payload)
     })
     .then((data) => {
       // return Promise.resolve(reply)
