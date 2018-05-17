@@ -8,6 +8,7 @@ const queryDynamoChatForAds = require('../DynamoDB/comms_chatbot_query').queryDy
 const CLIENT_ACCESS_KEY = require('../credentials/'+process.env.NODE_ENV+'/dialogflow_config').CLIENT_ACCESS_KEY
 const DEVELOPER_ACCESS_KEY = require('../credentials/'+process.env.NODE_ENV+'/dialogflow_config').DEVELOPER_ACCESS_KEY
 const FCM_MS = require('../credentials/'+process.env.NODE_ENV+'/API_URLs').FCM_MS
+const saveIntentLog = require('../api/stackdriver/stackdriver_api').saveIntentLog
 
 exports.init_dialogflow = function(req, res, next) {
   console.log(req.body)
@@ -45,6 +46,7 @@ exports.init_dialogflow = function(req, res, next) {
     .then((data) => {
       // once we have the response, only then do we dispatch an action to Redux
       console.log(data.data)
+      saveIntentLog(identity_id, session_id, data.data.result.metadata.intentId, bot_id, ad_id)
       console.log(session_id)
       res.json({
         message: data.data.result.fulfillment.speech,
@@ -95,6 +97,7 @@ exports.send_message = function(req, res, next) {
         return axios.post(`https://api.dialogflow.com/api/query?v=20150910`, params, headers)
                       .then((data) => {
                         console.log('------------ response from query -----------')
+                        saveIntentLog(info.identity_id, info.session_id, data.data.result.metadata.intentId, info.bot_id, info.ad_id)
                         // console.log(moment().format('LTS'))
 
                         // console.log(data.data.result)
@@ -261,6 +264,7 @@ exports.dialogflow_property_question = function(req, res, next) {
       return axios.post(`https://api.dialogflow.com/api/query?v=20150910`, params, headers)
     })
     .then((data) => {
+      saveIntentLog(identity_id, session_id, data.data.result.metadata.intentId, bot_id, ad_id)
       reply = data.data.result.fulfillment.speech
       sender = data.data.result.metadata.intentName ? data.data.result.metadata.intentName : data.data.result.action
       payload = data.data.result.fulfillment.data
@@ -332,6 +336,7 @@ exports.dialogflow_init_qualification = function(req, res, next) {
 
     axios.post(`https://api.dialogflow.com/api/query?v=20150910`, params, headers)
     .then((data) => {
+      saveIntentLog(identity_id, session_id, data.data.result.metadata.intentId, bot_id, ad_id)
       reply = data.data.result.fulfillment.speech
       sender = data.data.result.metadata.intentName ? data.data.result.metadata.intentName : data.data.result.action
       payload = data.data.result.fulfillment.data
@@ -409,6 +414,7 @@ exports.dialogflow_copmlete_qualification = function(req, res, next) {
 
     axios.post(`https://api.dialogflow.com/api/query?v=20150910`, params, headers)
     .then((data) => {
+      saveIntentLog(identity_id, session_id, data.data.result.metadata.intentId, bot_id, ad_id)
       reply = data.data.result.fulfillment.speech
       sender = data.data.result.metadata.intentName ? data.data.result.metadata.intentName : data.data.result.action
       payload = data.data.result.fulfillment.data
