@@ -12,7 +12,7 @@ const logging = new Logging({
 })
 
 
-exports.saveIntentLog = function(identity_id, session_id, intent_id, bot_id, ad_id) {
+exports.saveIntentLog = function(identity_id, session_id, intent_id, intent_name, bot_id, ad_id) {
   // The name of the log to write to
   const logName = `intents-hit`
   // Selects the log to write to
@@ -23,6 +23,7 @@ exports.saveIntentLog = function(identity_id, session_id, intent_id, bot_id, ad_
   const json = {
     identity_id: identity_id,
     intent_id: intent_id,
+    intent_name: intent_name,
     session_id: session_id,
     bot_id: bot_id,
     ad_id: ad_id,
