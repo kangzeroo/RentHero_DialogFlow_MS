@@ -38,6 +38,7 @@
     "webpack-webfont": "0.0.1-alpha.7"
   },
   "dependencies": {
+    "@google-cloud/logging": "1.2.0",
     "amazon-cognito-identity-js": "1.19.0",
     "amazon-cognito-js": "1.1.0",
     "antd-mobile": "2.1.2",
