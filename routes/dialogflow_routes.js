@@ -17,6 +17,8 @@ exports.init_dialogflow = function(req, res, next) {
   const identity_id = req.body.identityId
   const bot_id = req.body.botId
   let session_id = req.body.session_id || uuid.v4()
+  console.log('received identity_id: ', identity_id)
+  console.log('received ad_id: ', ad_id)
   console.log('received session_id: ', session_id)
   const headers = {
     headers: {
