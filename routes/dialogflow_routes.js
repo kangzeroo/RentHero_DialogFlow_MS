@@ -8,11 +8,16 @@ const queryDynamoChatForAds = require('../DynamoDB/comms_chatbot_query').queryDy
 const CLIENT_ACCESS_KEY = require('../credentials/'+process.env.NODE_ENV+'/dialogflow_config').CLIENT_ACCESS_KEY
 const DEVELOPER_ACCESS_KEY = require('../credentials/'+process.env.NODE_ENV+'/dialogflow_config').DEVELOPER_ACCESS_KEY
 const FCM_MS = require('../credentials/'+process.env.NODE_ENV+'/API_URLs').FCM_MS
+const saveIntentLog = require('../api/stackdriver/stackdriver_api_dialogflow').saveIntentLog
+const logSessionMilestone = require('../api/stackdriver/stackdriver_api_dialogflow').logSessionMilestone
+const logSessionError = require('../api/stackdriver/stackdriver_api_dialogflow').logSessionMilestone
+const saveSessionProgress = require('../api/stackdriver/stackdriver_api_dialogflow').saveSessionProgress
+
 
 exports.init_dialogflow = function(req, res, next) {
+  const progress = []
   console.log(req.body)
   console.log('--------- init_dialogflow')
-  // console.log(req.header)
   const ad_id = req.body.ad_id
   const identity_id = req.body.identityId
   const bot_id = req.body.botId
@@ -20,6 +25,7 @@ exports.init_dialogflow = function(req, res, next) {
   console.log('received identity_id: ', identity_id)
   console.log('received ad_id: ', ad_id)
   console.log('received session_id: ', session_id)
+  progress.push(logSessionMilestone(session_id, 'POST/init_dialogflow: Initiated DialogFlow from client to server', req.body, new Error().stack))
   const headers = {
     headers: {
       // be sure to change this from dev to prod agent tokens!
@@ -30,6 +36,7 @@ exports.init_dialogflow = function(req, res, next) {
     .then((session) => {
       console.log('session_id: ', session)
       session_id = session
+      progress.push(logSessionMilestone(session_id, 'POST/init_dialogflow: Saved session_id and ad_id pair to database', null, new Error().stack))
       const params = {
         'event': {
           'name': 'renthero-landlord-ai-init',
@@ -47,7 +54,10 @@ exports.init_dialogflow = function(req, res, next) {
     .then((data) => {
       // once we have the response, only then do we dispatch an action to Redux
       console.log(data.data)
+      progress.push(logSessionMilestone(session_id, 'POST/init_dialogflow: Matched an intent from DialogFlow', data.data, new Error().stack))
+      saveIntentLog(identity_id, session_id, data.data.result.metadata.intentId, data.data.result.metadata.intentName, bot_id, ad_id)
       console.log(session_id)
+      saveSessionProgress(progress)
       res.json({
         message: data.data.result.fulfillment.speech,
         payload: data.data.result.fulfillment.data,
@@ -56,6 +66,8 @@ exports.init_dialogflow = function(req, res, next) {
     })
     .catch((err) => {
       console.log(err)
+      progress.push(logSessionError(session_id, 'POST/init_dialogflow: An error occurred', err, new Error().stack, 600))
+      saveSessionProgress(progress)
       res.json({
         message: 'Uh oh! Something wrong happened',
         session_id: session_id
@@ -64,6 +76,7 @@ exports.init_dialogflow = function(req, res, next) {
 }
 
 exports.send_message = function(req, res, next) {
+  const progress = []
   console.log('------ SEND MESSAGE -------')
   console.log(moment().format('LTS'))
 
@@ -75,9 +88,15 @@ exports.send_message = function(req, res, next) {
     }
   }
   let payload = null
+  progress.push(logSessionMilestone(
+    info.session_id,
+    'POST/send_message: Received a client message in our server',
+    req.body,
+    new Error().stack)
+  )
   // saveDialog(ad_id, channel_id, staff_id, contact_id, sender_id, msg, payload)
   // saveDialog(req.body.message, req.body.session_id, req.body.session_id, req.body.ad_id)
-  saveDialog(info.ad_id, info.session_id, info.bot_id, info.identity_id, info.identity_id, info.message)
+  saveDialog(info.ad_id, info.session_id, info.bot_id, info.identity_id, 'TENANT_HUMAN', info.message)
     .then((data) => {
       const sentences = req.body.message.split(/[.!?\n\r]/gi)
       // console.log(sentences)
@@ -97,6 +116,8 @@ exports.send_message = function(req, res, next) {
         return axios.post(`https://api.dialogflow.com/api/query?v=20150910`, params, headers)
                       .then((data) => {
                         console.log('------------ response from query -----------')
+                        progress.push(logSessionMilestone(info.session_id, 'POST/send_message: Sent message matched a dialogflow intent', data.data, new Error().stack))
+                        saveIntentLog(info.identity_id, info.session_id, data.data.result.metadata.intentId, data.data.result.metadata.intentName, info.bot_id, info.ad_id)
                         // console.log(moment().format('LTS'))
 
                         // console.log(data.data.result)
@@ -118,8 +139,10 @@ exports.send_message = function(req, res, next) {
                             "data": payload,
                           }
                           console.log(pushNotification)
+                          progress.push(logSessionMilestone(info.session_id, 'POST/send_message: Dialogflow response sent via push notification', pushNotification, new Error().stack))
                           return axios.post(`${FCM_MS}/send_notification`, pushNotification, headers)
                         } else {
+                          progress.push(logSessionMilestone(info.session_id, 'POST/send_message: Dialogflow response NOT sent via push notification', null, new Error().stack))
                           return Promise.resolve()
                         }
                       })
@@ -129,13 +152,14 @@ exports.send_message = function(req, res, next) {
 
                         // saveDialog(ad_id, channel_id, staff_id, contact_id, sender_id, msg, payload)
                         // return saveDialog(reply, req.body.session_id, sender, req.body.ad_id, payload)
-                        return saveDialog(info.ad_id, info.session_id, sender, info.identity_id, sender, reply, payload)
+                        return saveDialog(info.ad_id, info.session_id, info.identity_id, info.bot_id, 'LANDLORD_AI', reply, payload)
                       })
                       .then((data) => {
                         return Promise.resolve(reply)
                       })
                       .catch((err) => {
                         console.log(err.response.data)
+                        progress.push(logSessionError(info.session_id, 'POST/init_dialogflow: An error occurred', err.response.data, new Error().stack, 400))
                         return Promise.resolve('')
                       })
       })
@@ -149,6 +173,7 @@ exports.send_message = function(req, res, next) {
           sumReply = `${sumReply} ${reply}`
         })
       }
+      saveSessionProgress(progress)
       res.json({
         message: sumReply,
         payload: payload
@@ -157,6 +182,8 @@ exports.send_message = function(req, res, next) {
     .catch((err) => {
       // console.log(err)
       console.log(err.response.data)
+      progress.push(logSessionError(info.session_id, 'POST/init_dialogflow: An error occurred', err.response.data, new Error().stack, 400))
+      saveSessionProgress(progress)
       res.status(500).send(err)
     })
 }
@@ -164,10 +191,12 @@ exports.send_message = function(req, res, next) {
 exports.dialogflow_fulfillment_renthero = function(req, res, next) {
   console.log('------ DIALOG FLOW FULFILLMENT -------')
   console.log(moment().format('LTS'))
+  const progress = []
   // console.log(req.body)
   // console.log(req.body.queryResult.fulfillmentMessages[0].text.text)
   // console.log('-------')
   const sessionID = req.body.session.slice(req.body.session.indexOf('/sessions/') + '/sessions/'.length)
+  progress.push(logSessionMilestone(sessionID, 'POST/dialogflow_fulfillment_renthero: Dialogflow Fulfillment webhook was triggered', req.body, new Error().stack))
   let ad_id = ''
   let reply = ''
   const headers = {
@@ -183,12 +212,14 @@ exports.dialogflow_fulfillment_renthero = function(req, res, next) {
       .then((endpoint) => {
         console.log(endpoint)
         console.log(moment().format('LTS'))
+        progress.push(logSessionMilestone(sessionID, 'POST/dialogflow_fulfillment_renthero: The intent provided by DialogFlow matched a domain endpoint', endpoint, new Error().stack))
         return axios.post(endpoint, req.body, headers)
       })
       .then((answer) => {
+        progress.push(logSessionMilestone(sessionID, 'POST/dialogflow_fulfillment_renthero: Our domain endpoint successfully provided an answer', answer, new Error().stack))
         console.log('======> ANSWER FOUND')
         console.log(moment().format('LTS'))
-
+        saveSessionProgress(progress)
         // console.log(answer.data)
         res.json({
           "fulfillmentText": answer.data.fulfillmentText,
@@ -198,6 +229,8 @@ exports.dialogflow_fulfillment_renthero = function(req, res, next) {
         })
       })
       .catch((err) => {
+        progress.push(logSessionError(sessionID, 'POST/dialogflow_fulfillment_renthero: Could not map the provided DialogFlow intent to a domain.', err, new Error().stack), 400)
+        saveSessionProgress(progress)
         res.json({
           "fulfillmentText": `I think I understand what you are saying, but to be honest I'm pretty confused. Maybe try a different question?`,
           "fulfillmentMessages": [],
@@ -205,6 +238,8 @@ exports.dialogflow_fulfillment_renthero = function(req, res, next) {
         })
       })
   } else {
+    progress.push(logSessionError(sessionID, 'POST/dialogflow_fulfillment_renthero: DialogFlow did not provide an intent when hitting this fulfillment webhook', req.body, new Error().stack), 400)
+    saveSessionProgress(progress)
     res.json({
       "fulfillmentText": req.body.queryResult.fulfillmentText,
       "fulfillmentMessages": req.body.queryResult.fulfillmentMessages,
@@ -217,13 +252,13 @@ exports.get_chatbot_logs_for_ad = function(req, res, next) {
   const info = req.body
   console.log(req.body)
   queryDynamoChatForAds(info.ad_id)
-  .then((data) => {
-    res.json(data)
-  })
-  .catch((err) => {
-    console.log(err)
-    res.status(500).send('Failed to get chatbot logs')
-  })
+    .then((data) => {
+      res.json(data)
+    })
+    .catch((err) => {
+      console.log(err)
+      res.status(500).send('Failed to get chatbot logs')
+    })
 }
 
 exports.dialogflow_property_question = function(req, res, next) {
@@ -258,11 +293,12 @@ exports.dialogflow_property_question = function(req, res, next) {
   let sender = ''
   let payload = null
 
-  saveDialog(ad_id, session_id, bot_id, identity_id, identity_id, message)
+  saveDialog(ad_id, session_id, bot_id, identity_id, 'TENANT_HUMAN', message)
     .then((data) => {
       return axios.post(`https://api.dialogflow.com/api/query?v=20150910`, params, headers)
     })
     .then((data) => {
+      saveIntentLog(identity_id, session_id, data.data.result.metadata.intentId, data.data.result.metadata.intentName, bot_id, ad_id)
       reply = data.data.result.fulfillment.speech
       sender = data.data.result.metadata.intentName ? data.data.result.metadata.intentName : data.data.result.action
       payload = data.data.result.fulfillment.data
@@ -285,7 +321,7 @@ exports.dialogflow_property_question = function(req, res, next) {
       console.log('SAVING DIALOGFLOW!!!')
 
       // saveDialog(ad_id, channel_id, staff_id, contact_id, sender_id, msg, payload)
-      return saveDialog(ad_id, session_id, sender, identity_id, sender, reply, payload)
+      return saveDialog(ad_id, session_id, identity_id, bot_id, 'LANDLORD_AI', reply, payload)
     })
     .then((data) => {
       // return Promise.resolve(reply)
@@ -334,6 +370,7 @@ exports.dialogflow_init_qualification = function(req, res, next) {
 
     axios.post(`https://api.dialogflow.com/api/query?v=20150910`, params, headers)
     .then((data) => {
+      saveIntentLog(identity_id, session_id, data.data.result.metadata.intentId, data.data.result.metadata.intentName, bot_id, ad_id)
       reply = data.data.result.fulfillment.speech
       sender = data.data.result.metadata.intentName ? data.data.result.metadata.intentName : data.data.result.action
       payload = data.data.result.fulfillment.data
@@ -411,6 +448,7 @@ exports.dialogflow_copmlete_qualification = function(req, res, next) {
 
     axios.post(`https://api.dialogflow.com/api/query?v=20150910`, params, headers)
     .then((data) => {
+      saveIntentLog(identity_id, session_id, data.data.result.metadata.intentId, data.data.result.metadata.intentName, bot_id, ad_id)
       reply = data.data.result.fulfillment.speech
       sender = data.data.result.metadata.intentName ? data.data.result.metadata.intentName : data.data.result.action
       payload = data.data.result.fulfillment.data
