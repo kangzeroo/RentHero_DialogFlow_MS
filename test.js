@@ -1,5 +1,5 @@
-const saveIntentLog = require('./api/stackdriver/stackdriver_api').saveIntentLog
-const getIntentLog = require('./api/stackdriver/stackdriver_api').getIntentLog
+const saveIntentLog = require('./api/stackdriver/stackdriver_api_dialogflow').saveIntentLog
+const getIntentLog = require('./api/stackdriver/stackdriver_api_dialogflow').getIntentLog
 
 const params = {
   autoPaginate: true,

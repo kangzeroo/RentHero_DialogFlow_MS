@@ -1,0 +1,20 @@
+const progress = []
+
+progress.push(logSessionMilestone(
+  sessionID,
+  'POST/endpoint: message',
+  req.body,
+  new Error().stack)
+)
+
+
+progress.push(logSessionError(
+  sessionID,
+  'POST/endpoint: message',
+  req.body,
+  new Error().stack),
+  400
+)
+
+
+saveSessionProgress(progress)
