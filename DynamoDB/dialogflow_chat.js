@@ -7,13 +7,13 @@ const RENTHERO_INTENTS_HIT = require('./schema/dynamodb_tablenames').RENTHERO_IN
 
 // saveDialog(ad_id, session_id, staff_id, contact_id, sender_id, msg, payload)
 // exports.saveDialog = function(msg, session_id, staff_id, contact_id, ad_id, payload) {
-exports.saveDialog = function(ad_id, session_id, receiver_id, sender_id, sender_type, msg, payload) {
+exports.saveDialog = function(message_id, ad_id, session_id, receiver_id, sender_id, sender_type, msg, payload) {
   const p = new Promise((res, rej) => {
     const timestamp = moment().toISOString()
     const item = {
       'TableName': RENTHERO_COMM_LOGS,
       'Item': {
-        'MESSAGE_ID': uuid.v4(),
+        'MESSAGE_ID': message_id,
         'AD_ID': ad_id,
         'SESSION_ID': session_id,
         'DATETIME': timestamp,
@@ -39,7 +39,7 @@ exports.saveDialog = function(ad_id, session_id, receiver_id, sender_id, sender_
   return p
 }
 
-exports.saveIntentHit = function(identity_id, session_id, intent_id, ad_id) {
+exports.saveIntentHit = function(identity_id, session_id, intent_id, intent_name, ad_id, prev_message_id, prev_message_text, next_message_id) {
   const p = new Promise((res, rej) => {
     const timestamp = moment().toISOString()
     const item = {
@@ -49,8 +49,12 @@ exports.saveIntentHit = function(identity_id, session_id, intent_id, ad_id) {
         'SESSION_ID': session_id,
         'DATETIME': moment().toISOString(),
         'AD_ID': ad_id,
+        'TENANT_ID': identity_id,
         'INTENT_ID': intent_id,
-        'TENANT_ID': identity_id
+        'INTENT_NAME': intent_name,
+        'PREV_MESSAGE_ID': prev_message_id,
+        'PREV_MESSAGE_TEXT': prev_message_text,
+        'NEXT_MESSAGE_ID': next_message_id
       }
     }
     console.log(item)
