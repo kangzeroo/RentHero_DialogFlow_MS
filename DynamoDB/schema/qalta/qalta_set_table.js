@@ -18,6 +18,7 @@ const qaltaTableParams = {
         // { AttributeName: "TYPE", AttributeType: "S" },
         // { AttributeName: "TAGS", AttributeType: "SS" },
         // { AttributeName: "PHRASING", AttributeType: "S" },
+        // { AttributeName: "QUESTION_ID", AttributeType: "S" },
         // { AttributeName: "GPS_X", AttributeType: "N" },
         // { AttributeName: "GPS_Y", AttributeType: "N" },
         // { AttributeName: "LANDLORD_ID", AttributeType: "S" },
