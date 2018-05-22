@@ -9,6 +9,7 @@ const CLIENT_ACCESS_KEY = require('../credentials/'+process.env.NODE_ENV+'/dialo
 const DEVELOPER_ACCESS_KEY = require('../credentials/'+process.env.NODE_ENV+'/dialogflow_config').DEVELOPER_ACCESS_KEY
 const FCM_MS = require('../credentials/'+process.env.NODE_ENV+'/API_URLs').FCM_MS
 const saveIntentLog = require('../api/stackdriver/stackdriver_api_dialogflow').saveIntentLog
+const saveIntentHit = require('../DynamoDB/dialogflow_chat').saveIntentHit
 const logSessionMilestone = require('../api/stackdriver/stackdriver_api_dialogflow').logSessionMilestone
 const logSessionError = require('../api/stackdriver/stackdriver_api_dialogflow').logSessionMilestone
 const saveSessionProgress = require('../api/stackdriver/stackdriver_api_dialogflow').saveSessionProgress
@@ -54,6 +55,7 @@ exports.init_dialogflow = function(req, res, next) {
       console.log(data.data)
       progress.push(logSessionMilestone(session_id, 'POST/init_dialogflow: Matched an intent from DialogFlow', data.data, new Error().stack))
       saveIntentLog(identity_id, session_id, data.data.result.metadata.intentId, data.data.result.metadata.intentName, bot_id, ad_id)
+      saveIntentHit(identity_id, session_id, data.data.result.metadata.intentId, ad_id)
       console.log(session_id)
       saveSessionProgress(progress)
       res.json({
@@ -92,7 +94,7 @@ exports.send_message = function(req, res, next) {
     req.body,
     new Error().stack)
   )
-  // saveDialog(ad_id, channel_id, staff_id, contact_id, sender_id, msg, payload)
+  // saveDialog(ad_id, session_id, staff_id, contact_id, sender_id, msg, payload)
   // saveDialog(req.body.message, req.body.session_id, req.body.session_id, req.body.ad_id)
   saveDialog(info.ad_id, info.session_id, info.bot_id, info.identity_id, 'TENANT_HUMAN', info.message)
     .then((data) => {
@@ -116,6 +118,7 @@ exports.send_message = function(req, res, next) {
                         console.log('------------ response from query -----------')
                         progress.push(logSessionMilestone(info.session_id, 'POST/send_message: Sent message matched a dialogflow intent', data.data, new Error().stack))
                         saveIntentLog(info.identity_id, info.session_id, data.data.result.metadata.intentId, data.data.result.metadata.intentName, info.bot_id, info.ad_id)
+                        saveIntentHit(info.identity_id, info.session_id, data.data.result.metadata.intentId, info.ad_id)
                         // console.log(moment().format('LTS'))
 
                         // console.log(data.data.result)
@@ -148,7 +151,7 @@ exports.send_message = function(req, res, next) {
                         // once we have the response, only then do we dispatch an action to Redux
                         console.log('SAVING DIALOGFLOW!!!')
 
-                        // saveDialog(ad_id, channel_id, staff_id, contact_id, sender_id, msg, payload)
+                        // saveDialog(ad_id, session_id, staff_id, contact_id, sender_id, msg, payload)
                         // return saveDialog(reply, req.body.session_id, sender, req.body.ad_id, payload)
                         return saveDialog(info.ad_id, info.session_id, info.identity_id, info.bot_id, 'LANDLORD_AI', reply, payload)
                       })
@@ -297,6 +300,7 @@ exports.dialogflow_property_question = function(req, res, next) {
     })
     .then((data) => {
       saveIntentLog(identity_id, session_id, data.data.result.metadata.intentId, data.data.result.metadata.intentName, bot_id, ad_id)
+      saveIntentHit(identity_id, session_id, data.data.result.metadata.intentId, ad_id)
       reply = data.data.result.fulfillment.speech
       sender = data.data.result.metadata.intentName ? data.data.result.metadata.intentName : data.data.result.action
       payload = data.data.result.fulfillment.data
@@ -318,7 +322,7 @@ exports.dialogflow_property_question = function(req, res, next) {
     .then((data) => {
       console.log('SAVING DIALOGFLOW!!!')
 
-      // saveDialog(ad_id, channel_id, staff_id, contact_id, sender_id, msg, payload)
+      // saveDialog(ad_id, session_id, staff_id, contact_id, sender_id, msg, payload)
       return saveDialog(ad_id, session_id, identity_id, bot_id, 'LANDLORD_AI', reply, payload)
     })
     .then((data) => {
@@ -369,6 +373,7 @@ exports.dialogflow_init_qualification = function(req, res, next) {
     axios.post(`https://api.dialogflow.com/api/query?v=20150910`, params, headers)
     .then((data) => {
       saveIntentLog(identity_id, session_id, data.data.result.metadata.intentId, data.data.result.metadata.intentName, bot_id, ad_id)
+      saveIntentHit(identity_id, session_id, data.data.result.metadata.intentId, ad_id)
       reply = data.data.result.fulfillment.speech
       sender = data.data.result.metadata.intentName ? data.data.result.metadata.intentName : data.data.result.action
       payload = data.data.result.fulfillment.data
@@ -390,7 +395,7 @@ exports.dialogflow_init_qualification = function(req, res, next) {
     .then((data) => {
       console.log('SAVING DIALOGFLOW!!!')
 
-      // saveDialog(ad_id, channel_id, staff_id, contact_id, sender_id, msg, payload)
+      // saveDialog(ad_id, session_id, staff_id, contact_id, sender_id, msg, payload)
       return saveDialog(ad_id, session_id, sender, identity_id, sender, reply, payload)
     })
     .then((data) => {
@@ -447,6 +452,7 @@ exports.dialogflow_copmlete_qualification = function(req, res, next) {
     axios.post(`https://api.dialogflow.com/api/query?v=20150910`, params, headers)
     .then((data) => {
       saveIntentLog(identity_id, session_id, data.data.result.metadata.intentId, data.data.result.metadata.intentName, bot_id, ad_id)
+      saveIntentHit(identity_id, session_id, data.data.result.metadata.intentId, ad_id)
       reply = data.data.result.fulfillment.speech
       sender = data.data.result.metadata.intentName ? data.data.result.metadata.intentName : data.data.result.action
       payload = data.data.result.fulfillment.data
@@ -468,7 +474,7 @@ exports.dialogflow_copmlete_qualification = function(req, res, next) {
     .then((data) => {
       console.log('SAVING DIALOGFLOW!!!')
 
-      // saveDialog(ad_id, channel_id, staff_id, contact_id, sender_id, msg, payload)
+      // saveDialog(ad_id, session_id, staff_id, contact_id, sender_id, msg, payload)
       return saveDialog(ad_id, session_id, sender, identity_id, sender, reply, payload)
     })
     .then((data) => {
