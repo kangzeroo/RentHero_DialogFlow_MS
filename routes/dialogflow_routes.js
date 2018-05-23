@@ -23,6 +23,8 @@ exports.init_dialogflow = function(req, res, next) {
   const identity_id = req.body.identityId
   const bot_id = req.body.botId
   let session_id = req.body.session_id || uuid.v4()
+  console.log('received identity_id: ', identity_id)
+  console.log('received ad_id: ', ad_id)
   console.log('received session_id: ', session_id)
   progress.push(logSessionMilestone(session_id, 'POST/init_dialogflow: Initiated DialogFlow from client to server', req.body, new Error().stack))
   const headers = {
@@ -225,11 +227,10 @@ exports.send_message = function(req, res, next) {
 
 exports.dialogflow_fulfillment_renthero = function(req, res, next) {
   console.log('------ DIALOG FLOW FULFILLMENT -------')
-  console.log(moment().format('LTS'))
   const progress = []
-  // console.log(req.body)
-  // console.log(req.body.queryResult.fulfillmentMessages[0].text.text)
-  // console.log('-------')
+  console.log(req.body)
+  console.log(req.body.queryResult.fulfillmentMessages[0].text.text)
+  console.log('-------')
   const sessionID = req.body.session.slice(req.body.session.indexOf('/sessions/') + '/sessions/'.length)
   progress.push(logSessionMilestone(sessionID, 'POST/dialogflow_fulfillment_renthero: Dialogflow Fulfillment webhook was triggered', req.body, new Error().stack))
   let ad_id = ''
@@ -490,11 +491,13 @@ exports.dialogflow_init_qualification = function(req, res, next) {
     })
 }
 
-exports.dialogflow_copmlete_qualification = function(req, res, next) {
+exports.dialogflow_execute_event = function(req, res, next) {
+  const event_name = req.body.event_name
   const ad_id = req.body.ad_id
   const identity_id = req.body.identityId
   const bot_id = req.body.botId
   const session_id = req.body.session_id
+  const tour_id = req.body.tour_id || ''
 
   console.log('received session_id: ', session_id)
 
@@ -515,6 +518,7 @@ exports.dialogflow_copmlete_qualification = function(req, res, next) {
     'timezone':'America/New_York',
     'lang':'en',
     'sessionId': session_id,
+    'tourId': tour_id,
   }
 
   let reply = ''

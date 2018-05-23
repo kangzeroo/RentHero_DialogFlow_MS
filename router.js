@@ -26,7 +26,7 @@ module.exports = function(app){
 	app.post('/get_chatbot_logs_for_ad', [json_encoding], DialogFlow.get_chatbot_logs_for_ad)
 	app.post('/dialogflow_property_question', [json_encoding], DialogFlow.dialogflow_property_question)
 	app.post('/dialogflow_init_qualification', [json_encoding], DialogFlow.dialogflow_init_qualification)
-	app.post('/dialogflow_copmlete_qualification', [json_encoding], DialogFlow.dialogflow_copmlete_qualification)
+	app.post('/dialogflow_execute_event', [json_encoding], DialogFlow.dialogflow_execute_event)
 
 	app.post('/save_user_reaction', [json_encoding], Feedback.save_user_reaction)
 }
