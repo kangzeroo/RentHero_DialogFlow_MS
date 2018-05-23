@@ -71,3 +71,33 @@ exports.getAdIdFromSession = (session_id) => {
   })
   return p
 }
+
+exports.getAdSnapshot = (ad_id) => {
+  const p = new Promise((res, rej) => {
+    const values = [ad_id]
+
+    // lat, lng, address, unit #, # of rooms, # of baths, price of rooms/suite,
+
+    const get_ad = `SELECT * FROM sessions WHERE session_id = $1`
+
+    const return_rows = (rows) => {
+      console.log(rows)
+      res(rows[0])
+    }
+    return query(get_ad, values)
+      .then((data) => {
+        return stringify_rows(data)
+      })
+      .then((data) => {
+        return json_rows(data)
+      })
+      .then((data) => {
+        return return_rows(data)
+      })
+      .catch((err) => {
+        console.log(err)
+        rej('Failed to get any chat channels')
+      })
+  })
+  return p
+}

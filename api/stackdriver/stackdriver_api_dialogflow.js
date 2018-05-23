@@ -12,7 +12,7 @@ const logging = new Logging({
 })
 
 
-exports.saveIntentLog = function(identity_id, session_id, intent_id, intent_name, bot_id, ad_id) {
+exports.saveIntentLog = function(identity_id, session_id, intent_id, intent_name, bot_id, ad_id, payload) {
   // The name of the log to write to
   const logName = `intents-hit`
   // Selects the log to write to
@@ -27,7 +27,8 @@ exports.saveIntentLog = function(identity_id, session_id, intent_id, intent_name
     session_id: session_id,
     bot_id: bot_id,
     ad_id: ad_id,
-    timestamp: created_at
+    timestamp: created_at,
+    payload: payload || { message: 'no payload' }
   }
   // The metadata associated with the entry
   const metadata = {
