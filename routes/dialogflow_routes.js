@@ -33,14 +33,18 @@ exports.init_dialogflow = function(req, res, next) {
       Authorization: `Bearer ${CLIENT_ACCESS_KEY}`
     }
   }
+  let prev_message_id = uuid.v4()
+  let next_message_id = uuid.v4()
+  let event_name = 'renthero-landlord-ai-init'
   saveSessionAndAdIds(session_id, ad_id, identity_id, bot_id)
     .then((session) => {
       console.log('session_id: ', session)
       session_id = session
+      saveDialog(prev_message_id, ad_id, session_id, bot_id, identity_id, 'TENANT_HUMAN', 'DIALOGFLOW_EVENT_renthero-landlord-ai-init')
       progress.push(logSessionMilestone(session_id, 'POST/init_dialogflow: Saved session_id and ad_id pair to database', null, new Error().stack))
       const params = {
         'event': {
-          'name': 'renthero-landlord-ai-init',
+          'name': event_name,
           'data': {
             'ad_id': ad_id
           }
@@ -56,14 +60,25 @@ exports.init_dialogflow = function(req, res, next) {
       // once we have the response, only then do we dispatch an action to Redux
       console.log(data.data)
       progress.push(logSessionMilestone(session_id, 'POST/init_dialogflow: Matched an intent from DialogFlow', data.data, new Error().stack))
-      saveIntentLog(identity_id, session_id, data.data.result.metadata.intentId, data.data.result.metadata.intentName, bot_id, ad_id)
-      saveIntentHit(identity_id, session_id, data.data.result.metadata.intentId, ad_id)
+      saveIntentLog(identity_id, session_id, data.data.result.metadata.intentId, data.data.result.metadata.intentName, bot_id, ad_id, data.data)
+      saveIntentHit(
+        identity_id,
+        session_id,
+        data.data.result.metadata.intentId,
+        data.data.result.metadata.intentName,
+        ad_id,
+        prev_message_id,
+        `DIALOGFLOW_EVENT_${event_name}`,
+        next_message_id
+      )
       console.log(session_id)
       saveSessionProgress(progress)
+      saveDialog(next_message_id, ad_id, session_id, identity_id, bot_id, 'LANDLORD_AI', data.data.result.fulfillment.speech)
       res.json({
         message: data.data.result.fulfillment.speech,
         payload: data.data.result.fulfillment.data,
-        session_id: session_id
+        session_id: session_id,
+        id: next_message_id,
       })
     })
     .catch((err) => {
@@ -72,7 +87,8 @@ exports.init_dialogflow = function(req, res, next) {
       saveSessionProgress(progress)
       res.json({
         message: 'Uh oh! Something wrong happened',
-        session_id: session_id
+        session_id: session_id,
+        id: next_message_id,
       })
     })
 }
@@ -98,7 +114,11 @@ exports.send_message = function(req, res, next) {
   )
   // saveDialog(ad_id, session_id, staff_id, contact_id, sender_id, msg, payload)
   // saveDialog(req.body.message, req.body.session_id, req.body.session_id, req.body.ad_id)
-  saveDialog(info.ad_id, info.session_id, info.bot_id, info.identity_id, 'TENANT_HUMAN', info.message)
+  let prev_message_id = uuid.v4()
+  let next_message_id = uuid.v4()
+  let intent_id = ''
+  let intent_name = ''
+  saveDialog(prev_message_id, info.ad_id, info.session_id, info.bot_id, info.identity_id, 'TENANT_HUMAN', info.message)
     .then((data) => {
       const sentences = req.body.message.split(/[.!?\n\r]/gi)
       // console.log(sentences)
@@ -119,17 +139,30 @@ exports.send_message = function(req, res, next) {
                       .then((data) => {
                         console.log('------------ response from query -----------')
                         progress.push(logSessionMilestone(info.session_id, 'POST/send_message: Sent message matched a dialogflow intent', data.data, new Error().stack))
-                        saveIntentLog(info.identity_id, info.session_id, data.data.result.metadata.intentId, data.data.result.metadata.intentName, info.bot_id, info.ad_id)
-                        saveIntentHit(info.identity_id, info.session_id, data.data.result.metadata.intentId, info.ad_id)
+                        saveIntentLog(info.identity_id, info.session_id, data.data.result.metadata.intentId, data.data.result.metadata.intentName, info.bot_id, info.ad_id, data.data)
+                        saveIntentHit(
+                          info.identity_id,
+                          info.session_id,
+                          data.data.result.metadata.intentId,
+                          data.data.result.metadata.intentName,
+                          info.ad_id,
+                          prev_message_id,
+                          info.message,
+                          next_message_id
+                        )
                         // console.log(moment().format('LTS'))
-
+                        intent_id = data.data.result.metadata.intentId
+                        intent_name = data.data.result.metadata.intentName
                         // console.log(data.data.result)
                         // console.log('------------ response from query -----------')
                         // console.log(data.data)
                         // console.log(data.data.result.fulfillment.messages)
                         reply = data.data.result.fulfillment.speech
                         sender = data.data.result.metadata.intentName ? data.data.result.metadata.intentName : data.data.result.action
-                        payload = data.data.result.fulfillment.data
+                        payload = data.data.result.fulfillment.data || {}
+                        payload.message_id = next_message_id
+                        payload.intent_id = intent_id
+                        payload.intent_name = intent_name
                         // console.log(payload)
                         if (req.headers.push_notifications === 'granted') {
                           console.log('PUSH NOTIFICATIONS!!!')
@@ -155,7 +188,7 @@ exports.send_message = function(req, res, next) {
 
                         // saveDialog(ad_id, session_id, staff_id, contact_id, sender_id, msg, payload)
                         // return saveDialog(reply, req.body.session_id, sender, req.body.ad_id, payload)
-                        return saveDialog(info.ad_id, info.session_id, info.identity_id, info.bot_id, 'LANDLORD_AI', reply, payload)
+                        return saveDialog(next_message_id, info.ad_id, info.session_id, info.identity_id, info.bot_id, 'LANDLORD_AI', reply, payload)
                       })
                       .then((data) => {
                         return Promise.resolve(reply)
@@ -179,7 +212,8 @@ exports.send_message = function(req, res, next) {
       saveSessionProgress(progress)
       res.json({
         message: sumReply,
-        payload: payload
+        payload: payload,
+        id: next_message_id,
       })
     })
     .catch((err) => {
@@ -278,10 +312,10 @@ exports.dialogflow_property_question = function(req, res, next) {
       Authorization: `Bearer ${CLIENT_ACCESS_KEY}`
     }
   }
-
+  let event_name = 'init-from-property-question'
   const params = {
     'event': {
-      'name': 'init-from-property-question',
+      'name': event_name,
       'data': {
         'ad_id': ad_id,
       }
@@ -295,16 +329,34 @@ exports.dialogflow_property_question = function(req, res, next) {
   let sender = ''
   let payload = null
 
-  saveDialog(ad_id, session_id, bot_id, identity_id, 'TENANT_HUMAN', message)
+  let prev_message_id = uuid.v4()
+  let next_message_id = uuid.v4()
+  let intent_id = ''
+  let intent_name = ''
+  saveDialog(prev_message_id, ad_id, session_id, bot_id, identity_id, 'TENANT_HUMAN', message)
     .then((data) => {
       return axios.post(`https://api.dialogflow.com/api/query?v=20150910`, params, headers)
     })
     .then((data) => {
-      saveIntentLog(identity_id, session_id, data.data.result.metadata.intentId, data.data.result.metadata.intentName, bot_id, ad_id)
-      saveIntentHit(identity_id, session_id, data.data.result.metadata.intentId, ad_id)
+      saveIntentLog(identity_id, session_id, data.data.result.metadata.intentId, data.data.result.metadata.intentName, bot_id, ad_id, data.data)
+      saveIntentHit(
+        identity_id,
+        session_id,
+        data.data.result.metadata.intentId,
+        data.data.result.metadata.intentName,
+        ad_id,
+        prev_message_id,
+        `DIALOGFLOW_EVENT_${event_name}`,
+        next_message_id
+      )
+      intent_id = data.data.result.metadata.intentId
+      intent_name = data.data.result.metadata.intentName
       reply = data.data.result.fulfillment.speech
       sender = data.data.result.metadata.intentName ? data.data.result.metadata.intentName : data.data.result.action
-      payload = data.data.result.fulfillment.data
+      payload = data.data.result.fulfillment.data || {}
+      payload.message_id = next_message_id
+      payload.intent_id = intent_id
+      payload.intent_name = intent_name
       if (req.headers.push_notifications === 'granted') {
         console.log('PUSH NOTIFICATIONS!!!')
         let pushNotification = {
@@ -324,13 +376,14 @@ exports.dialogflow_property_question = function(req, res, next) {
       console.log('SAVING DIALOGFLOW!!!')
 
       // saveDialog(ad_id, session_id, staff_id, contact_id, sender_id, msg, payload)
-      return saveDialog(ad_id, session_id, identity_id, bot_id, 'LANDLORD_AI', reply, payload)
+      return saveDialog(next_message_id, ad_id, session_id, identity_id, bot_id, 'LANDLORD_AI', reply, payload)
     })
     .then((data) => {
       // return Promise.resolve(reply)
       res.json({
-        message: 'Successfully sent',
+        message: reply,
         session_id: session_id,
+        id: next_message_id,
       })
     })
     .catch((err) => {
@@ -354,10 +407,10 @@ exports.dialogflow_init_qualification = function(req, res, next) {
       Authorization: `Bearer ${CLIENT_ACCESS_KEY}`
     }
   }
-
+  let event_name = 'init-qualification-questions'
   const params = {
     'event': {
-      'name': 'init-qualification-questions',
+      'name': event_name,
       'data': {
         'ad_id': ad_id,
       }
@@ -371,13 +424,31 @@ exports.dialogflow_init_qualification = function(req, res, next) {
   let sender = ''
   let payload = null
 
-    axios.post(`https://api.dialogflow.com/api/query?v=20150910`, params, headers)
+  let prev_message_id = uuid.v4()
+  let next_message_id = uuid.v4()
+  let intent_id = ''
+  let intent_name = ''
+  axios.post(`https://api.dialogflow.com/api/query?v=20150910`, params, headers)
     .then((data) => {
-      saveIntentLog(identity_id, session_id, data.data.result.metadata.intentId, data.data.result.metadata.intentName, bot_id, ad_id)
-      saveIntentHit(identity_id, session_id, data.data.result.metadata.intentId, ad_id)
+      saveIntentLog(identity_id, session_id, data.data.result.metadata.intentId, data.data.result.metadata.intentName, bot_id, ad_id, data.data)
+      saveIntentHit(
+        identity_id,
+        session_id,
+        data.data.result.metadata.intentId,
+        data.data.result.metadata.intentName,
+        ad_id,
+        prev_message_id,
+        `DIALOGFLOW_EVENT_${event_name}`,
+        next_message_id
+      )
+      intent_id = data.data.result.metadata.intentId
+      intent_name = data.data.result.metadata.intentName
       reply = data.data.result.fulfillment.speech
       sender = data.data.result.metadata.intentName ? data.data.result.metadata.intentName : data.data.result.action
-      payload = data.data.result.fulfillment.data
+      payload = data.data.result.fulfillment.data || {}
+      payload.message_id = next_message_id
+      payload.intent_id = intent_id
+      payload.intent_name = intent_name
       if (req.headers.push_notifications === 'granted') {
         console.log('PUSH NOTIFICATIONS!!!')
         let pushNotification = {
@@ -397,7 +468,7 @@ exports.dialogflow_init_qualification = function(req, res, next) {
       console.log('SAVING DIALOGFLOW!!!')
 
       // saveDialog(ad_id, session_id, staff_id, contact_id, sender_id, msg, payload)
-      return saveDialog(ad_id, session_id, sender, identity_id, sender, reply, payload)
+      return saveDialog(next_message_id, ad_id, session_id, sender, identity_id, sender, reply, payload)
     })
     .then((data) => {
       // console.log('===>DATA: ', JSON.stringify(data))
@@ -409,7 +480,8 @@ exports.dialogflow_init_qualification = function(req, res, next) {
       }
       res.json({
         message: sumReply,
-        payload: payload
+        payload: payload,
+        id: next_message_id,
       })
     })
     .catch((err) => {
@@ -435,7 +507,7 @@ exports.dialogflow_execute_event = function(req, res, next) {
       Authorization: `Bearer ${CLIENT_ACCESS_KEY}`
     }
   }
-
+  let event_name = 'completed-qualification-answers'
   const params = {
     'event': {
       'name': event_name,
@@ -453,13 +525,31 @@ exports.dialogflow_execute_event = function(req, res, next) {
   let sender = ''
   let payload = null
 
-    axios.post(`https://api.dialogflow.com/api/query?v=20150910`, params, headers)
+  let prev_message_id = uuid.v4()
+  let next_message_id = uuid.v4()
+  let intent_id = ''
+  let intent_name = ''
+  axios.post(`https://api.dialogflow.com/api/query?v=20150910`, params, headers)
     .then((data) => {
-      saveIntentLog(identity_id, session_id, data.data.result.metadata.intentId, data.data.result.metadata.intentName, bot_id, ad_id)
-      saveIntentHit(identity_id, session_id, data.data.result.metadata.intentId, ad_id)
+      saveIntentLog(identity_id, session_id, data.data.result.metadata.intentId, data.data.result.metadata.intentName, bot_id, ad_id, data.data)
+      saveIntentHit(
+        identity_id,
+        session_id,
+        data.data.result.metadata.intentId,
+        data.data.result.metadata.intentName,
+        ad_id,
+        prev_message_id,
+        `DIALOGFLOW_EVENT_${event_name}`,
+        next_message_id
+      )
+      intent_id = data.data.result.metadata.intentId
+      intent_name = data.data.result.metadata.intentName
       reply = data.data.result.fulfillment.speech
       sender = data.data.result.metadata.intentName ? data.data.result.metadata.intentName : data.data.result.action
-      payload = data.data.result.fulfillment.data
+      payload = data.data.result.fulfillment.data || {}
+      payload.message_id = next_message_id
+      payload.intent_id = intent_id
+      payload.intent_name = intent_name
       if (req.headers.push_notifications === 'granted') {
         console.log('PUSH NOTIFICATIONS!!!')
         let pushNotification = {
@@ -479,7 +569,7 @@ exports.dialogflow_execute_event = function(req, res, next) {
       console.log('SAVING DIALOGFLOW!!!')
 
       // saveDialog(ad_id, session_id, staff_id, contact_id, sender_id, msg, payload)
-      return saveDialog(ad_id, session_id, sender, identity_id, sender, reply, payload)
+      return saveDialog(next_message_id, ad_id, session_id, sender, identity_id, sender, reply, payload)
     })
     .then((data) => {
       // console.log('===>DATA: ', JSON.stringify(data))
@@ -491,7 +581,8 @@ exports.dialogflow_execute_event = function(req, res, next) {
       }
       res.json({
         message: sumReply,
-        payload: payload
+        payload: payload,
+        id: next_message_id,
       })
     })
     .catch((err) => {
