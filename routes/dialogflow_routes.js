@@ -507,7 +507,6 @@ exports.dialogflow_execute_event = function(req, res, next) {
       Authorization: `Bearer ${CLIENT_ACCESS_KEY}`
     }
   }
-  let event_name = 'completed-qualification-answers'
   const params = {
     'event': {
       'name': event_name,
