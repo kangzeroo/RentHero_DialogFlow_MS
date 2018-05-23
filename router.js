@@ -8,6 +8,7 @@ const bodyParser = require('body-parser')
 // routes
 const Test = require('./routes/test_routes')
 const DialogFlow = require('./routes/dialogflow_routes')
+const Feedback = require('./routes/feedback_routes')
 
 // bodyParser attempts to parse any request into JSON format
 const json_encoding = bodyParser.json({type:'*/*'})
@@ -26,4 +27,6 @@ module.exports = function(app){
 	app.post('/dialogflow_property_question', [json_encoding], DialogFlow.dialogflow_property_question)
 	app.post('/dialogflow_init_qualification', [json_encoding], DialogFlow.dialogflow_init_qualification)
 	app.post('/dialogflow_copmlete_qualification', [json_encoding], DialogFlow.dialogflow_copmlete_qualification)
+
+	app.post('/save_user_reaction', [json_encoding], Feedback.save_user_reaction)
 }
