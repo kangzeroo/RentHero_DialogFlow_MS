@@ -78,7 +78,40 @@ exports.getAdSnapshot = (ad_id) => {
 
     // lat, lng, address, unit #, # of rooms, # of baths, price of rooms/suite,
 
-    const get_ad = `SELECT * FROM sessions WHERE session_id = $1`
+    const get_ad = `SELECT c.gps_x, c.gps_y,
+                           b.ad_title, b.ad_unit,
+                           d.num_available_rooms, d.available_rooms_price,
+                           e.total_rooms, e.total_rooms_price,
+                           f.num_bathrooms
+                      FROM advertisements b
+                      INNER JOIN address c
+                      ON b.address_id = c.address_id
+                      LEFT OUTER JOIN (
+                        SELECT ad_id, COUNT(*) AS num_available_rooms,
+                               SUM(price) AS available_rooms_price
+                          FROM rooms
+                          WHERE type = 'bedroom'
+                            AND available = true
+                          GROUP BY ad_id
+                      ) d
+                      ON b.ad_id = d.ad_id
+                      LEFT OUTER JOIN (
+                        SELECT ad_id, COUNT(*) AS total_rooms,
+                               SUM(price) AS total_rooms_price
+                          FROM rooms
+                          WHERE type = 'bedroom'
+                          GROUP BY ad_id
+                      ) e
+                      ON b.ad_id = e.ad_id
+                      LEFT OUTER JOIN (
+                        SELECT ad_id, COUNT(*) AS num_bathrooms
+                          FROM rooms
+                          WHERE type = 'bathroom'
+                          GROUP BY ad_id
+                      ) f
+                      ON b.ad_id = f.ad_id
+                      WHERE b.ad_id = $1
+                  `
 
     const return_rows = (rows) => {
       console.log(rows)
