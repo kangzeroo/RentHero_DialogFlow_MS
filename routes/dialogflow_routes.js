@@ -163,8 +163,12 @@ exports.send_message = function(req, res, next) {
                         payload.message_id = next_message_id
                         payload.intent_id = intent_id
                         payload.intent_name = intent_name
+                        payload.message = reply
+                        payload.text = reply
+
                         // console.log(payload)
-                        if (req.headers.push_notifications === 'granted') {
+                        // if (req.headers.push_notifications === 'granted') {
+                        if (false) {
                           console.log('PUSH NOTIFICATIONS!!!')
                           let pushNotification = {
                             "session_id": req.body.session_id,
@@ -204,7 +208,8 @@ exports.send_message = function(req, res, next) {
     .then((data) => {
       // console.log('===>DATA: ', JSON.stringify(data))
       let sumReply = ''
-      if (req.headers.push_notifications !== 'granted') {
+      // if (req.headers.push_notifications !== 'granted') {\
+      if (true) {
         data.forEach((reply) => {
           sumReply = `${sumReply} ${reply}`
         })
@@ -357,7 +362,10 @@ exports.dialogflow_property_question = function(req, res, next) {
       payload.message_id = next_message_id
       payload.intent_id = intent_id
       payload.intent_name = intent_name
-      if (req.headers.push_notifications === 'granted') {
+      payload.message = reply
+      payload.text = reply
+      // if (req.headers.push_notifications === 'granted') {
+      if (false) {
         console.log('PUSH NOTIFICATIONS!!!')
         let pushNotification = {
           "session_id": req.body.session_id,
@@ -388,7 +396,7 @@ exports.dialogflow_property_question = function(req, res, next) {
     })
     .catch((err) => {
       console.log(err)
-      res.status(500).send('Failed to send selection')
+      res.status(500).send(`Failed to send selection ${err}`)
       // return Promise.resolve('')
     })
 }
@@ -449,7 +457,10 @@ exports.dialogflow_init_qualification = function(req, res, next) {
       payload.message_id = next_message_id
       payload.intent_id = intent_id
       payload.intent_name = intent_name
-      if (req.headers.push_notifications === 'granted') {
+      payload.message = reply
+      payload.text = reply
+      // if (req.headers.push_notifications === 'granted') {
+      if (false) {
         console.log('PUSH NOTIFICATIONS!!!')
         let pushNotification = {
           "session_id": req.body.session_id,
@@ -473,11 +484,12 @@ exports.dialogflow_init_qualification = function(req, res, next) {
     .then((data) => {
       // console.log('===>DATA: ', JSON.stringify(data))
       let sumReply = ''
-      if (req.headers.push_notifications !== 'granted') {
-        data.forEach((reply) => {
-          sumReply = `${sumReply} ${reply}`
-        })
-      }
+      // if (req.headers.push_notifications !== 'granted') {
+      // if (true) {
+      //   data.forEach((reply) => {
+      //     sumReply = `${sumReply} ${reply}`
+      //   })
+      // }
       res.json({
         message: sumReply,
         payload: payload,
@@ -549,7 +561,11 @@ exports.dialogflow_execute_event = function(req, res, next) {
       payload.message_id = next_message_id
       payload.intent_id = intent_id
       payload.intent_name = intent_name
-      if (req.headers.push_notifications === 'granted') {
+      payload.message = reply
+      payload.text = reply
+
+      // if (req.headers.push_notifications === 'granted') {
+      if (false) {
         console.log('PUSH NOTIFICATIONS!!!')
         let pushNotification = {
           "session_id": req.body.session_id,
@@ -572,12 +588,14 @@ exports.dialogflow_execute_event = function(req, res, next) {
     })
     .then((data) => {
       // console.log('===>DATA: ', JSON.stringify(data))
+      console.log('====>DATA: ', data)
       let sumReply = ''
-      if (req.headers.push_notifications !== 'granted') {
-        data.forEach((reply) => {
-          sumReply = `${sumReply} ${reply}`
-        })
-      }
+      // if (req.headers.push_notifications !== 'granted') {
+      // if (true) {
+      //   data.forEach((reply) => {
+      //     sumReply = `${sumReply} ${reply}`
+      //   })
+      // }
       res.json({
         message: sumReply,
         payload: payload,
