@@ -65,7 +65,7 @@ exports.saveIntentHit = function(identity_id, session_id, intent_id, intent_name
           'AVAIL_ROOMS_PRICE': parseInt(data.available_rooms_price),
           'TOTAL_ROOMS': parseInt(data.total_rooms),
           'TOTAL_ROOMS_PRICE': parseInt(data.total_rooms_price),
-          'GEO_POINT': `${parseFloat(data.gps_x)}, ${parseFloat(data.gps_y)}`
+          'GEO_POINT': `${parseFloat(data.gps_x)},${parseFloat(data.gps_y)}`
         }
       }
       console.log(item)
